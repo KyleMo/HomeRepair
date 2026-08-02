@@ -1,0 +1,302 @@
+// Generates the client INSIDE this package (not node_modules) so pnpm's
+// strict linking never causes resolution issues in the consuming apps.
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * *****************
+ * Company Data
+ * *****************
+ */
+model Organization {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  name String
+
+  companies   Company[]
+  memberships Membership[]
+
+  @@map("organizations")
+}
+
+enum TenantStatus {
+  Trial
+  Active
+  Paused
+  Churned
+}
+
+model Company {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  status TenantStatus
+  slug   String       @unique
+  name   String
+
+  address_id String
+  address    Address @relation(fields: [address_id], references: [id])
+
+  organization_id String
+  organization    Organization @relation(fields: [organization_id], references: [id])
+
+  memberships      Membership[]
+  company_services CompanyService[]
+  appliance_types  ApplianceType[]
+  brands           Brand[]
+  brand_rules      CompanyBrandRule[]
+  symptoms         Symptom[]
+  symptom_rules    CompanySymptomRule[]
+
+  @@index([organization_id])
+  @@map("companies")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  email          String    @unique
+  password_hash  String
+  first_name     String
+  last_name      String?
+  deactivated_at DateTime?
+
+  membership Membership[]
+
+  @@map("users")
+}
+
+enum MembershipRole {
+  Owner
+  Admin
+  Staff
+}
+
+model Membership {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  role MembershipRole
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
+
+  organization_id String
+  organization    Organization @relation(fields: [organization_id], references: [id])
+
+  // null company_id means its an org level membership
+  company_id String?
+  company    Company? @relation(fields: [company_id], references: [id])
+
+  @@unique([user_id, company_id])
+  @@index([organization_id])
+  @@index([company_id])
+  @@map("memberships")
+}
+
+model CompanyService {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  enabled              Boolean @default(true)
+  // This is the default job duration time
+  job_duration_minutes Int
+
+  appliance_type_id String
+  appliance_type    ApplianceType @relation(fields: [appliance_type_id], references: [id])
+  company_id        String
+  company           Company       @relation(fields: [company_id], references: [id])
+
+  duration_overrides CompanyServiceDurationOverride[]
+
+  @@unique([company_id, appliance_type_id])
+  @@map("company_services")
+}
+
+model CompanyServiceDurationOverride {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  duration_minutes Int
+
+  company_service_id String
+  company_service    CompanyService @relation(fields: [company_service_id], references: [id])
+
+  brand_id String?
+  brand    Brand?  @relation(fields: [brand_id], references: [id])
+
+  symptom_id String?
+  symptom    Symptom? @relation(fields: [symptom_id], references: [id])
+
+  @@index([company_service_id])
+  @@map("company_service_duration_overrides")
+}
+
+enum BrandRuleType {
+  Allow
+  Deny
+  Prefer
+}
+
+model CompanyBrandRule {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  rule BrandRuleType
+
+  company_id String
+  company    Company @relation(fields: [company_id], references: [id])
+
+  brand_id String
+  brand    Brand  @relation(fields: [brand_id], references: [id])
+
+  // Can blacklist a brand or a brand's fridge/stove/oven/etc..
+  appliance_type_id String?
+  appliance_type    ApplianceType? @relation(fields: [appliance_type_id], references: [id])
+
+  @@index([company_id])
+  @@map("company_brand_rules")
+}
+
+model ApplianceType {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  name String
+
+  company_id String?
+  company    Company? @relation(fields: [company_id], references: [id])
+
+  symptoms            Symptom[]
+  model_tag_locations ModelTagLocation[]
+  company_services    CompanyService[]
+  brand_rules         CompanyBrandRule[]
+
+  @@index([company_id])
+  @@map("appliance_types")
+}
+
+model Symptom {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  name        String
+  description String
+
+  // A company can create their own symptem, otherwise they're system defaults
+  company_id String?
+  company    Company? @relation(fields: [company_id], references: [id])
+
+  appliance_type_id String
+  appliance_type    ApplianceType @relation(fields: [appliance_type_id], references: [id])
+
+  brand_id                           String?
+  brand                              Brand?                           @relation(fields: [brand_id], references: [id])
+  company_service_duration_overrides CompanyServiceDurationOverride[]
+  symptom_rules                      CompanySymptomRule[]
+
+  @@index([company_id])
+  @@index([appliance_type_id])
+  @@map("symptoms")
+}
+
+enum SymptomRuleType {
+  Enabled
+  Disabled
+}
+
+model CompanySymptomRule {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  rule SymptomRuleType
+
+  company_id String
+  company    Company @relation(fields: [company_id], references: [id])
+
+  symptom_id String
+  symptom    Symptom @relation(fields: [symptom_id], references: [id])
+
+  @@index([company_id, symptom_id])
+  @@map("symptom_rules")
+}
+
+model ModelTagLocation {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  appliance_type_id String
+  appliance_type    ApplianceType @relation(fields: [appliance_type_id], references: [id])
+
+  brand_id String?
+  brand    Brand?  @relation(fields: [brand_id], references: [id])
+
+  @@index([appliance_type_id, brand_id])
+  @@map("model_tag_locations")
+}
+
+model Brand {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  name    String
+  // Alternate names to check for to ensure dupe isn't created
+  aliases String[]
+
+  // Brands can belong to the system or to a company
+  // Duplicate check against existing system brands 
+  // On creation to avoid dupes
+  company_id                 String?
+  company                    Company?                         @relation(fields: [company_id], references: [id])
+  model_tag_locations        ModelTagLocation[]
+  service_duration_overrides CompanyServiceDurationOverride[]
+  brand_rules                CompanyBrandRule[]
+  symptoms                   Symptom[]
+
+  @@index([company_id])
+  @@map("brands")
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Street address
+  line1 String // "123 Main St"
+  line2 String? // apt / unit / suite / floor
+
+  city        String
+  state       String // state / province / region (US: 2-letter code)
+  postal_code String
+  country     String @default("US") // ISO 3166-1 alpha-2
+
+  // Geocoding — powers tech dispatch, routing, and distance/radius search.
+  // Nullable: populated asynchronously after the address is entered.
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
+
+  companies Company[]
+
+  @@map("addresses")
+}

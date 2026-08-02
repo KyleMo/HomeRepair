@@ -1,0 +1,76 @@
+.header {
+    background: var(--hr-color-bg);
+    height: 55px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.bar {
+    display: flex;
+    align-items: center;
+    gap: var(--hr-space-3);
+    padding: var(--hr-space-3) var(--hr-space-5);
+    flex-grow: 1;
+}
+
+.avatar {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--hr-color-brand);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.name {
+    flex: 1;
+    min-width: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--hr-color-fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.phone {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hr-space-1);
+    color: var(--hr-color-accent);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.phone:hover {
+    text-decoration: underline;
+}
+
+.phoneIcon {
+    width: 18px;
+    height: 18px;
+}
+
+.progress {
+    min-height: 3px;
+    background: var(--hr-color-track);
+    overflow: hidden;
+}
+
+.progressFill {
+    display: block;
+    height: 100%;
+    background: var(--hr-color-brand);
+    border-radius: 0 2px 2px 0;
+    transition: width 0.3s ease;
+}

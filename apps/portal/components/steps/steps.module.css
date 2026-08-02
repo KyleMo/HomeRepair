@@ -1,0 +1,207 @@
+.portalbody {
+    height: 100%;
+    width: 100%;
+    padding: 0px 32px;
+    flex-grow: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.muteText {
+    color: #989898;
+}
+
+.grid {
+    list-style: none;
+    margin: 0;
+    padding: 2px 4px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--hr-space-3);
+    overflow: auto;
+    height: 100%;
+}
+
+.card {
+    appearance: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: var(--hr-space-2);
+    padding: var(--hr-space-4);
+    min-height: 128px;
+    text-align: left;
+    background: var(--hr-color-bg);
+    border: 1px solid var(--hr-color-border);
+    border-radius: var(--hr-radius-md);
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.05s ease;
+}
+
+.card:hover {
+    border-color: var(--hr-color-brand);
+}
+
+.card:focus-visible {
+    outline: none;
+    border-color: var(--hr-color-brand);
+    box-shadow: 0 0 0 3px rgba(18, 102, 74, 0.15);
+}
+
+.card:active {
+    transform: scale(0.99);
+}
+
+.card[aria-pressed="true"] {
+    border-color: var(--hr-color-brand);
+    background: var(--hr-color-brand-subtle, rgba(18, 102, 74, 0.06));
+    box-shadow:
+        0 0 0 1px var(--hr-color-brand),
+        0 6px 16px rgba(18, 102, 74, 0.1);
+}
+
+.card[aria-pressed="true"] .label {
+    color: var(--hr-color-brand-strong);
+}
+
+.iconWrap {
+    color: var(--hr-color-brand-strong);
+}
+
+.icon {
+    width: 35px;
+    height: 35px;
+    display: block;
+}
+
+.label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--hr-color-fg);
+    line-height: 1.2;
+}
+
+.flexWrapContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.flexRow {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Custom address autocomplete: our own input + dropdown, fed by the Places
+   data API. Fully styleable since there's no shadow DOM involved. */
+.autocomplete {
+    width: 100%;
+}
+
+.suggestionList {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0.25rem;
+    background: white;
+    border: 1px solid var(--hr-color-border);
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.suggestionItem {
+    padding: 0.6rem 0.75rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.suggestionItem:hover {
+    background: var(--hr-color-brand-subtle, rgba(18, 102, 74, 0.06));
+}
+
+.brandList {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0px;
+}
+
+.listItem {
+    padding: 0.75rem 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.074);
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+    border-radius: 1rem;
+}
+
+.listItem:hover {
+    background: var(--hr-color-brand-subtle, rgba(18, 102, 74, 0.06));
+}
+
+.listItem.selected {
+    color: var(--hr-color-brand-strong);
+    background: var(--hr-color-brand-subtle, rgba(18, 102, 74, 0.06));
+}
+
+.snapModelBoxInstruction {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #dddddd;
+    border-radius: 1rem;
+    padding: 1rem;
+    height: 50%;
+    height: fit-content;
+}
+
+@media screen and (min-width: 500px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .snapModelBoxInstruction {
+        flex-direction: row;
+    }
+
+    .title {
+        font-size: 1.35rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+}
+
+.snapModelIcon {
+    height: 80px;
+    width: auto;
+}

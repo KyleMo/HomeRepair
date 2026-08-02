@@ -1,0 +1,28 @@
+{
+    "name": "@homerepair/portal",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "dev": "next dev --port 3001",
+        "build": "next build",
+        "build:loader": "esbuild loader/loader.ts --bundle --minify --format=iife --target=es2017 --outfile=public/loader.js",
+        "start": "next start --port 3001",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "@googlemaps/js-api-loader": "^2.1.1",
+        "@homerepair/data": "workspace:*",
+        "@homerepair/utility": "workspace:*",
+        "next": "^15.3.0",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0"
+    },
+    "devDependencies": {
+        "@types/google.maps": "^3.65.3",
+        "@types/node": "^22.15.0",
+        "@types/react": "^19.1.0",
+        "@types/react-dom": "^19.1.0",
+        "esbuild": "^0.25.0",
+        "typescript": "^5.8.0"
+    }
+}

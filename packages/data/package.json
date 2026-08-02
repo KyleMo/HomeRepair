@@ -1,0 +1,34 @@
+{
+    "name": "@homerepair/data",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./types": "./src/types.ts"
+    },
+    "prisma": {
+        "seed": "tsx prisma/seed/index.ts"
+    },
+    "scripts": {
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push",
+        "db:migrate": "prisma migrate dev",
+        "db:studio": "prisma studio",
+        "db:seed": "tsx prisma/seed/index.ts"
+    },
+    "dependencies": {
+        "@homerepair/utility": "workspace:*",
+        "@prisma/adapter-pg": "^7.8.0",
+        "@prisma/client": "^7.8.0",
+        "bcryptjs": "^3.0.3",
+        "dotenv": "^17.4.2",
+        "server-only": "^0.0.1",
+        "tsx": "^4.23.1"
+    },
+    "devDependencies": {
+        "@types/node": "^22.20.0",
+        "prisma": "^7.8.0",
+        "typescript": "^5.8.0"
+    }
+}

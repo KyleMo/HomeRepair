@@ -1,0 +1,20 @@
+{
+    "name": "@homerepair/utility",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./client": "./src/client/index.ts",
+        "./server": "./src/server/index.ts",
+        "./types": "./src/types.ts"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "server-only": "^0.0.1"
+    }
+}

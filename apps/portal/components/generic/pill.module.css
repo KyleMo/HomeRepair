@@ -1,0 +1,86 @@
+/* Compact rounded label / chip. Neutral by default, with brand/accent/outline
+   variants and an optional dismiss button. Built on the --hr design tokens. */
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hr-space-1);
+    width: fit-content;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-family: var(--hr-font-sans);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+    cursor: pointer;
+}
+
+.label {
+    display: inline-block;
+}
+
+.md {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+}
+
+/* Variants */
+.neutral {
+    background: var(--hr-color-track);
+    color: var(--hr-color-fg);
+    border-color: var(--hr-color-border);
+}
+
+.neutral:hover {
+    background: color-mix(
+        in srgb,
+        var(--hr-color-fg) 8%,
+        var(--hr-color-track)
+    );
+}
+
+.outline {
+    background: transparent;
+    color: var(--hr-color-brand);
+    /*border-color: var(--hr-color-brand);*/
+    border: 1px solid teal;
+}
+
+.outline:hover {
+    background: color-mix(in srgb, var(--hr-color-brand) 10%, transparent);
+    border-color: var(--hr-color-brand);
+}
+
+/* Dismiss button */
+.remove {
+    display: grid;
+    place-items: center;
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 1.15em;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.7;
+    transition:
+        background-color 0.15s ease,
+        opacity 0.15s ease;
+}
+
+.remove:hover {
+    opacity: 1;
+    background: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.remove:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px
+        color-mix(in srgb, var(--hr-color-accent) 45%, transparent);
+}

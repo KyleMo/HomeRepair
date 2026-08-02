@@ -1,0 +1,30 @@
+{
+    "name": "@homerepair/console",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+        "dev": "next dev --port 3000",
+        "build": "next build",
+        "start": "next start --port 3000",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.1",
+        "@homerepair/data": "workspace:*",
+        "@homerepair/utility": "workspace:*",
+        "@mui/material": "^9.2.0",
+        "@next/env": "^16.2.12",
+        "bcryptjs": "^3.0.3",
+        "next": "^15.3.0",
+        "next-auth": "^4.24.15",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.0",
+        "@types/react": "^19.1.0",
+        "@types/react-dom": "^19.1.0",
+        "typescript": "^5.8.0"
+    }
+}

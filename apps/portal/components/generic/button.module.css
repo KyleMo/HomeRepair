@@ -1,0 +1,52 @@
+/* Circular icon button, inspired by MUI's IconButton: a round hit target that
+   lifts on hover with a brightening background wash and a subtle scale. */
+.button {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: fit-content;
+    height: fit-content;
+    padding: 3px;
+    border: none;
+    border-radius: 50%;
+    background: var(--hr-color-track);
+    color: var(--hr-color-fg);
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.button:hover {
+    background: var(--hr-color-border);
+    transform: scale(1.08);
+}
+
+.button:active {
+    transform: scale(1);
+}
+
+.button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--hr-color-accent) 40%, transparent);
+}
+
+.button:disabled {
+    cursor: default;
+    opacity: 0.5;
+    transform: none;
+    background: var(--hr-color-track);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .button {
+        transition: background-color 0.15s ease;
+    }
+
+    .button:hover,
+    .button:active {
+        transform: none;
+    }
+}

@@ -1,0 +1,19 @@
+.textInput {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 1.3rem 0.8rem;
+    height: 25px;
+    border-radius: 15px;
+    outline: none;
+    border: 2px solid teal;
+    font-weight: 500;
+    font-family: inherit;
+}
+
+@media screen and (max-width: 500px) {
+    .textInput {
+        font-size: 1.25rem;
+        padding: 1.5rem 1rem;
+        height: 30px;
+    }
+}
