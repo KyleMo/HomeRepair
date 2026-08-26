@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../generated/client/index.js";
+import { PrismaClient } from "./generated/client/index.js";
 import { slugify } from "@homerepair/utility";
 import bcrypt from "bcryptjs";
 
@@ -16,21 +16,11 @@ const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString }),
 });
 
-export async function hashPassword(
-    password: string,
-    salt: number,
-): Promise<string | null> {
-    try {
-        return await bcrypt.hash(password, salt);
-    } catch (error) {
-        console.error(error);
-        return null;
-    }
-}
-
-// Placeholder bcrypt-shaped hash for dev users. These accounts can't actually
-// authenticate — replace with a real hash if you need to log in as them.
-const DEV_PASSWORD_HASH = (await hashPassword("password", 10)) as string;
+// Every dev user shares this hash — log in as any of them with "password".
+// Must stay in sync with the bcrypt.compare in the console's NextAuth
+// credentials provider; a failure here should abort the seed rather than
+// write unusable password_hash values.
+const DEV_PASSWORD_HASH = await bcrypt.hash("password", 10);
 
 async function seedDev() {
     // --- Organization ---

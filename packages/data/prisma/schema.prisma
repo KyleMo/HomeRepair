@@ -19,7 +19,9 @@ model Organization {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  name String
+  name     String
+  timezone String  @default("America/Los_Angeles") // IANA identifier
+  phone    String?
 
   companies   Company[]
   memberships Membership[]
@@ -39,16 +41,21 @@ model Company {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  status TenantStatus
-  slug   String       @unique
-  name   String
+  status   TenantStatus
+  slug     String       @unique
+  name     String
+  timezone String       @default("America/Los_Angeles") // IANA identifier
+  phone    String?
 
   address_id String
-  address    Address @relation(fields: [address_id], references: [id])
+  address    CompanyAddress @relation(fields: [address_id], references: [id])
 
   organization_id String
   organization    Organization @relation(fields: [organization_id], references: [id])
 
+  booking_setting  CompanyBookingSetting?
+  brand_setting    CompanyBrandSetting?
+  bookings        CompanyBooking[]
   memberships      Membership[]
   company_services CompanyService[]
   appliance_types  ApplianceType[]
@@ -56,7 +63,9 @@ model Company {
   brand_rules      CompanyBrandRule[]
   symptoms         Symptom[]
   symptom_rules    CompanySymptomRule[]
+  customers Customer[]
 
+  @@unique([address_id])
   @@index([organization_id])
   @@map("companies")
 }
@@ -120,10 +129,170 @@ model CompanyService {
   company_id        String
   company           Company       @relation(fields: [company_id], references: [id])
 
+  bookings CompanyBooking[]
   duration_overrides CompanyServiceDurationOverride[]
 
   @@unique([company_id, appliance_type_id])
   @@map("company_services")
+}
+
+enum Font {
+  Poppins
+}
+
+model CompanyBrandSetting {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  primary_color   String @default("#0F6E56")
+  secondary_color String @default("#E1F5EE")
+  selected_fill   String @default("#E1F5EE")
+  selected_text   String @default("#085041")
+  body_text       String @default("#000000")
+  button_text     String @default("#FFFFFF")
+  page_background String @default("#F5F7F6")
+
+  corner_radius Int     @default(12)
+  font          Font    @default(Poppins)
+  logo_url      String?
+
+  company_id String
+  company    Company @relation(fields: [company_id], references: [id])
+
+  @@unique([company_id])
+  @@map("company_brand_settings")
+}
+
+model CompanyBookingSetting {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  default_window_length_minutes   Int
+  allowed_jobs_per_window Int
+
+  company_id String
+  company    Company @relation(fields: [company_id], references: [id])
+
+  days_of_the_week DayOfWeekSetting[]
+
+  @@unique([company_id])
+  @@map("company_booking_settings")
+}
+
+enum Weekday {
+  Sunday
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+}
+
+model DayOfWeekSetting {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  is_open        Boolean
+  week_day  Weekday
+
+  open_at  String @default("09:00") @db.VarChar(5)
+  close_at String @default("17:00") @db.VarChar(5)
+
+  company_booking_setting_id String
+  company_booking_setting    CompanyBookingSetting @relation(fields: [company_booking_setting_id], references: [id])
+
+  @@unique([company_booking_setting_id, week_day])
+  @@map("day_of_week_settings")
+}
+
+enum BookingStatus {
+  Scheduled
+  InProgress
+  Completed
+  Cancelled
+}
+
+model CompanyBooking {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  status BookingStatus @default(Scheduled)
+  completed_at DateTime?
+  cancelled_at DateTime?
+  start_time DateTime
+  end_time DateTime
+  booked_timezone String
+
+  // Address Snapshot
+  line1 String
+  line2 String? 
+  city        String
+  // ISO 3166-2
+  state    String   @db.VarChar(3)
+  postal_code String @db.VarChar(10)
+  // ISO 3166-1 alpha-2
+  country     String @db.VarChar(2) @default("US")
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
+
+  company_service_id String
+  company_service CompanyService @relation(fields: [company_service_id], references: [id])
+
+  appliance_brand_id String?
+  appliance_brand Brand? @relation(fields: [appliance_brand_id], references: [id])
+
+  company_id String
+  company    Company @relation(fields: [company_id], references: [id])
+
+  customer_id String
+  customer Customer @relation(fields: [customer_id], references: [id])
+
+  booking_symptoms BookingSymptom[]
+
+  // Ordered by company_id, then start_time — a company's bookings sit
+  // contiguously, so a date range is one slice, already in sort order.
+  @@index([company_id, start_time])
+  @@map("company_bookings")
+}
+
+model BookingSymptom {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  company_booking_id String
+  company_booking CompanyBooking @relation(fields: [company_booking_id], references: [id])
+
+  symptom_id String
+  symptom Symptom @relation(fields: [symptom_id], references: [id])
+
+  @@unique([company_booking_id, symptom_id])
+  @@map("booking_symptoms")
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  phone String
+  first_name String
+  last_name String
+  email String?
+
+  company_id String
+  company    Company @relation(fields: [company_id], references: [id])
+
+  addresses CustomerAddress[]
+  bookings CompanyBooking[]
+
+  @@unique([company_id, phone])
+  @@map("customers")
 }
 
 model CompanyServiceDurationOverride {
@@ -211,6 +380,7 @@ model Symptom {
   brand                              Brand?                           @relation(fields: [brand_id], references: [id])
   company_service_duration_overrides CompanyServiceDurationOverride[]
   symptom_rules                      CompanySymptomRule[]
+  bookings                           BookingSymptom[]
 
   @@index([company_id])
   @@index([appliance_type_id])
@@ -272,12 +442,44 @@ model Brand {
   service_duration_overrides CompanyServiceDurationOverride[]
   brand_rules                CompanyBrandRule[]
   symptoms                   Symptom[]
+  bookings                     CompanyBooking[]
 
   @@index([company_id])
   @@map("brands")
 }
 
-model Address {
+model CustomerAddress {
+  id         String   @id @default(cuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  label String?
+  is_primary Boolean @default(false)
+
+  // Street address
+  line1 String // "123 Main St"
+  line2 String? // apt / unit / suite / floor
+
+  city        String
+  // ISO 3166-2
+  state    String   @db.VarChar(3)
+  postal_code String @db.VarChar(10)
+  // ISO 3166-1 alpha-2
+  country     String @db.VarChar(2) @default("US")
+
+  // Geocoding — powers tech dispatch, routing, and distance/radius search.
+  // Nullable: populated asynchronously after the address is entered.
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
+
+  customer_id String 
+  customer Customer @relation(fields: [customer_id], references: [id])
+
+  @@index([customer_id])
+  @@map("customer_addresses")
+}
+
+model CompanyAddress {
   id         String   @id @default(cuid())
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -287,16 +489,17 @@ model Address {
   line2 String? // apt / unit / suite / floor
 
   city        String
-  state       String // state / province / region (US: 2-letter code)
-  postal_code String
-  country     String @default("US") // ISO 3166-1 alpha-2
+  // ISO 3166-2
+  state    String   @db.VarChar(3)
+  postal_code String @db.VarChar(10)
+  // ISO 3166-1 alpha-2
+  country     String @db.VarChar(2) @default("US")
 
   // Geocoding — powers tech dispatch, routing, and distance/radius search.
   // Nullable: populated asynchronously after the address is entered.
   latitude  Decimal? @db.Decimal(9, 6)
   longitude Decimal? @db.Decimal(9, 6)
 
-  companies Company[]
-
-  @@map("addresses")
+  company Company?
+  @@map("company_addresses")
 }
