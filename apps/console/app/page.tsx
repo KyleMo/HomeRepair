@@ -1,8 +1,11 @@
 import { type User } from "@homerepair/data";
+import { redirect } from "next/navigation";
 
 export default async function ConsoleHome() {
     let users: User[] = [];
     let dbError: string | null = null;
+
+    redirect("/overview");
 
     return (
         <main style={{ padding: "2rem", fontFamily: "system-ui" }}>

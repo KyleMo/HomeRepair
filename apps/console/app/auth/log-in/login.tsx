@@ -13,13 +13,6 @@ import { useRouter } from "next/navigation";
 
 type Credentials = { email: string; password: string };
 
-type UserData = {
-    name: string;
-    email: string;
-    type: string[];
-    orgId?: string;
-};
-
 const Login = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | undefined>();
@@ -50,25 +43,19 @@ const Login = () => {
                 password: credentials.password,
                 redirect: false,
             });
-            console.log(res);
             setLoading(false);
 
             if (!res || !res.ok) {
                 setError("Incorrect email or password.");
                 return;
             }
+
+            router.push("/overview");
+            router.refresh();
         } catch (error) {
             console.log(error);
         }
     };
-
-    // useEffect(() => {
-    //     if (session.data?.user) {
-    //         const user = session.data.user as UserData;
-    //         const type = user.type;
-    //         const orgId = user.orgId;
-    //     }
-    // }, [session.data]);
 
     return (
         <div

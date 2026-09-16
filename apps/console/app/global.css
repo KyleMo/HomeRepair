@@ -1,0 +1,13 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    /* min-height, not height: the document must be free to grow past the
+       viewport so the page scrolls and position: sticky has room to travel. */
+    min-height: 100vh;
+    width: 100%;
+}
+
+button {
+    cursor: pointer;
+}

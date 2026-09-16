@@ -13,13 +13,18 @@
         "@emotion/styled": "^11.14.1",
         "@homerepair/data": "workspace:*",
         "@homerepair/utility": "workspace:*",
+        "@mui/icons-material": "^9.2.0",
         "@mui/material": "^9.2.0",
         "@next/env": "^16.2.12",
+        "@tanstack/react-query": "^5.101.4",
         "bcryptjs": "^3.0.3",
+        "dayjs": "^1.11.23",
         "next": "^15.3.0",
         "next-auth": "^4.24.15",
         "react": "^19.1.0",
-        "react-dom": "^19.1.0"
+        "react-colorful": "^5.8.0",
+        "react-dom": "^19.1.0",
+        "zod": "^4.5.4"
     },
     "devDependencies": {
         "@types/node": "^22.15.0",
