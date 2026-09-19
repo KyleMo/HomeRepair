@@ -1,12 +1,13 @@
 "use client";
-import { useOrganizations, useValidatedSession } from "@/hooks";
+import { useCompanySettings, useOrganizations } from "@/hooks";
 import PageLayout from "@/components/PageLayout";
 import Stack from "@mui/material/Stack";
-import { Button, MenuItem, Select } from "@mui/material";
+import { Alert, Button, MenuItem, Select, Typography } from "@mui/material";
 import FilterChip from "@/components/FilterChip";
 import { useState } from "react";
 import Brand from "./Brand";
 import Availability from "./Availability";
+import CardContainer from "@/components/CardContainer";
 
 const NAV_OPTIONS = [
     { id: "hr_branding", label: "Branding & colors" },
@@ -17,16 +18,42 @@ const NAV_OPTIONS = [
 const Settings = () => {
     const { currentName } = useOrganizations();
     const [page, setPage] = useState(NAV_OPTIONS[0]?.id as string);
+    const {
+        companyId,
+        draft,
+        isLoading,
+        isSaving,
+        isDirty,
+        error,
+        updateCompany,
+        updateBrand,
+        updateHours,
+        updateDay,
+        save,
+        reset,
+    } = useCompanySettings();
 
     return (
         <PageLayout
             title={`Settings`}
             subtitle={currentName}
+            isLoading={isLoading || isSaving}
             actionsSlot={
                 <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
-                    <Button sx={{ flexShrink: 0 }}>Reset</Button>
-                    <Button variant="contained" sx={{ flexShrink: 0 }}>
-                        Save
+                    <Button
+                        sx={{ flexShrink: 0 }}
+                        disabled={!isDirty || isSaving}
+                        onClick={reset}
+                    >
+                        Reset
+                    </Button>
+                    <Button
+                        variant="contained"
+                        sx={{ flexShrink: 0 }}
+                        disabled={!isDirty || isSaving}
+                        onClick={save}
+                    >
+                        {isSaving ? "Saving…" : "Save"}
                     </Button>
                 </Stack>
             }
@@ -75,8 +102,43 @@ const Settings = () => {
                     );
                 })}
             </Stack>
-            {page == "hr_branding" && <Brand />}
-            {page === "hr_hours" && <Availability />}
+
+            {error && (
+                <Alert severity="error" sx={{ marginBottom: 2 }}>
+                    {error}
+                </Alert>
+            )}
+
+            {/* Every setting on this page belongs to one company, so there is
+                nothing coherent to show while the filter spans several. */}
+            {!companyId ? (
+                <CardContainer title="Pick a company">
+                    <Typography>
+                        Branding and hours are configured per company.
+                        Choose one from the filter above to edit its settings.
+                    </Typography>
+                </CardContainer>
+            ) : (
+                draft && (
+                    <>
+                        {page === "hr_branding" && (
+                            <Brand
+                                company={draft.company}
+                                brand={draft.brand}
+                                onCompanyChange={updateCompany}
+                                onBrandChange={updateBrand}
+                            />
+                        )}
+                        {page === "hr_hours" && (
+                            <Availability
+                                hours={draft.hours}
+                                onHoursChange={updateHours}
+                                onDayChange={updateDay}
+                            />
+                        )}
+                    </>
+                )
+            )}
         </PageLayout>
     );
 };

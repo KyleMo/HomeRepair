@@ -3,6 +3,14 @@
 import CardContainer from "@/components/CardContainer";
 import IOSSwitch from "@/components/IOSSwitch";
 import {
+    MAX_JOBS_PER_WINDOW,
+    MIN_JOBS_PER_WINDOW,
+    WINDOW_LENGTHS_MINUTES,
+    type DaySettings,
+    type HoursSettings,
+} from "@/types/setting";
+import type { Weekday } from "@homerepair/data/types";
+import {
     DayOfWeek,
     buildTimeSlots,
     daysOfWeek,
@@ -18,18 +26,42 @@ import {
     ToggleButtonGroup,
     Typography,
 } from "@mui/material";
-import { useState } from "react";
 
 /** Built once — the list is identical for every select on the page. */
 const TIME_SLOTS = buildTimeSlots();
 
-/** Selectable arrival window lengths, in hours. */
-const WINDOW_LENGTHS = [2, 3, 4];
+const MINUTES_PER_HOUR = 60;
 
-const MIN_JOBS_PER_WINDOW = 1;
-const MAX_JOBS_PER_WINDOW = 10;
+/** "09:00" -> 540. Fixed-width 24h input, as the column stores. */
+const toMinutes = (time: string) =>
+    Number(time.slice(0, 2)) * MINUTES_PER_HOUR + Number(time.slice(3, 5));
 
-const Availability = () => {
+const dayCapacity = (
+    day: DaySettings,
+    windowLengthMinutes: number,
+    jobsPerWindow: number,
+) => {
+    if (!day.is_open) return { windows: 0, slots: 0 };
+
+    const windows = Math.floor(
+        (toMinutes(day.close_at) - toMinutes(day.open_at)) /
+            windowLengthMinutes,
+    );
+
+    return { windows, slots: windows * jobsPerWindow };
+};
+
+type AvailabilityProps = {
+    hours: HoursSettings;
+    onHoursChange: (patch: Partial<Omit<HoursSettings, "days">>) => void;
+    onDayChange: (weekDay: Weekday, patch: Partial<DaySettings>) => void;
+};
+
+const Availability = ({
+    hours,
+    onHoursChange,
+    onDayChange,
+}: AvailabilityProps) => {
     return (
         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ width: "100%" }}>
             <Grid size={12}>
@@ -39,12 +71,29 @@ const Availability = () => {
                         subtitle="Arrival windows are only offered inside these hours."
                     >
                         <Stack sx={{ gap: 1 }}>
-                            {daysOfWeek.map((dow) => (
-                                <AvailabilityDowConfig
-                                    key={dow.index}
-                                    dayOfWeek={dow}
-                                />
-                            ))}
+                            {daysOfWeek.map((dow) => {
+                                // The API always sends all seven days, Sunday
+                                // first, so this pairs up one-to-one.
+                                const day = hours.days[dow.index];
+                                if (!day) return null;
+
+                                return (
+                                    <AvailabilityDowConfig
+                                        key={dow.index}
+                                        dayOfWeek={dow}
+                                        day={day}
+                                        windowLengthMinutes={
+                                            hours.default_window_length_minutes
+                                        }
+                                        jobsPerWindow={
+                                            hours.allowed_jobs_per_window
+                                        }
+                                        onChange={(patch) =>
+                                            onDayChange(day.week_day, patch)
+                                        }
+                                    />
+                                );
+                            })}
                         </Stack>
                     </CardContainer>
                 </Stack>
@@ -54,16 +103,30 @@ const Availability = () => {
                     title="Arrival Windows"
                     subtitle="How the booking flow slices your day."
                 >
-                    <ArrivalWindows />
+                    <ArrivalWindows
+                        hours={hours}
+                        onHoursChange={onHoursChange}
+                    />
                 </CardContainer>
             </Grid>
         </Grid>
     );
 };
 
-const ArrivalWindows = () => {
-    const [windowHours, setWindowHours] = useState(2);
-    const [jobsPerWindow, setJobsPerWindow] = useState(3);
+type ArrivalWindowsProps = {
+    hours: HoursSettings;
+    onHoursChange: (patch: Partial<Omit<HoursSettings, "days">>) => void;
+};
+
+const ArrivalWindows = ({ hours, onHoursChange }: ArrivalWindowsProps) => {
+    const windowMinutes = hours.default_window_length_minutes;
+    const jobsPerWindow = hours.allowed_jobs_per_window;
+
+    const weeklySlots = hours.days.reduce(
+        (total, day) =>
+            total + dayCapacity(day, windowMinutes, jobsPerWindow).slots,
+        0,
+    );
 
     return (
         <Stack sx={{ gap: 3 }}>
@@ -76,7 +139,16 @@ const ArrivalWindows = () => {
                 </Typography>
                 <ToggleButtonGroup
                     exclusive
-                    value={windowHours}
+                    value={windowMinutes}
+                    onChange={(_event, minutes) =>
+                        // null arrives when the selected button is clicked
+                        // again; a company always has a window length, so the
+                        // deselect is ignored rather than stored.
+                        minutes !== null &&
+                        onHoursChange({
+                            default_window_length_minutes: minutes,
+                        })
+                    }
                     aria-label="Window length"
                     sx={{
                         gap: 1.5,
@@ -115,15 +187,19 @@ const ArrivalWindows = () => {
                         },
                     }}
                 >
-                    {WINDOW_LENGTHS.map((hours) => (
-                        <ToggleButton
-                            key={hours}
-                            value={hours}
-                            aria-label={`${hours} hour windows`}
-                        >
-                            {hours} hr
-                        </ToggleButton>
-                    ))}
+                    {WINDOW_LENGTHS_MINUTES.map((minutes) => {
+                        const hoursLong = minutes / MINUTES_PER_HOUR;
+
+                        return (
+                            <ToggleButton
+                                key={minutes}
+                                value={minutes}
+                                aria-label={`${hoursLong} hour windows`}
+                            >
+                                {hoursLong} hr
+                            </ToggleButton>
+                        );
+                    })}
                 </ToggleButtonGroup>
             </Stack>
 
@@ -155,7 +231,9 @@ const ArrivalWindows = () => {
 
                 <Slider
                     value={jobsPerWindow}
-                    onChange={(_event, next) => setJobsPerWindow(next)}
+                    onChange={(_event, next) =>
+                        onHoursChange({ allowed_jobs_per_window: next })
+                    }
                     min={MIN_JOBS_PER_WINDOW}
                     max={MAX_JOBS_PER_WINDOW}
                     step={1}
@@ -174,7 +252,7 @@ const ArrivalWindows = () => {
                     variant="label"
                     sx={{ fontSize: 12.5, fontWeight: 500 }}
                 >
-                    Across 2 active technicians
+                    {weeklySlots} bookable slots a week
                 </Typography>
             </Stack>
         </Stack>
@@ -183,10 +261,25 @@ const ArrivalWindows = () => {
 
 type AvailabilityDowConfigProps = {
     dayOfWeek: DayOfWeek;
+    day: DaySettings;
+    windowLengthMinutes: number;
+    jobsPerWindow: number;
+    onChange: (patch: Partial<DaySettings>) => void;
 };
 
-const AvailabilityDowConfig = ({ dayOfWeek }: AvailabilityDowConfigProps) => {
-    const [open, setOpen] = useState(true);
+const AvailabilityDowConfig = ({
+    dayOfWeek,
+    day,
+    windowLengthMinutes,
+    jobsPerWindow,
+    onChange,
+}: AvailabilityDowConfigProps) => {
+    const { windows, slots } = dayCapacity(
+        day,
+        windowLengthMinutes,
+        jobsPerWindow,
+    );
+
     return (
         <Stack
             direction="row"
@@ -210,8 +303,17 @@ const AvailabilityDowConfig = ({ dayOfWeek }: AvailabilityDowConfigProps) => {
                     }}
                 >
                     <IOSSwitch
-                        checked={open}
-                        onChange={() => setOpen((prev) => !prev)}
+                        checked={day.is_open}
+                        // Closing a day keeps its hours, so switching it back
+                        // on restores what was there rather than the default.
+                        onChange={(event) =>
+                            onChange({ is_open: event.target.checked })
+                        }
+                        slotProps={{
+                            input: {
+                                "aria-label": `${dayOfWeek.label} open`,
+                            },
+                        }}
                     />
                     <Typography
                         variant="label"
@@ -221,12 +323,20 @@ const AvailabilityDowConfig = ({ dayOfWeek }: AvailabilityDowConfigProps) => {
                     </Typography>
                 </Stack>
                 <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
-                    {open ? (
+                    {day.is_open ? (
                         <>
                             <Select
                                 size="small"
-                                value="09:00"
+                                value={day.open_at}
+                                onChange={(event) =>
+                                    onChange({ open_at: event.target.value })
+                                }
                                 sx={{ width: 116, flexShrink: 0 }}
+                                slotProps={{
+                                    input: {
+                                        "aria-label": `${dayOfWeek.label} opens at`,
+                                    },
+                                }}
                             >
                                 {TIME_SLOTS.map((ts) => (
                                     <MenuItem key={ts} value={ts}>
@@ -237,8 +347,16 @@ const AvailabilityDowConfig = ({ dayOfWeek }: AvailabilityDowConfigProps) => {
                             <Typography>to</Typography>
                             <Select
                                 size="small"
-                                value="17:00"
+                                value={day.close_at}
+                                onChange={(event) =>
+                                    onChange({ close_at: event.target.value })
+                                }
                                 sx={{ width: 116, flexShrink: 0 }}
+                                slotProps={{
+                                    input: {
+                                        "aria-label": `${dayOfWeek.label} closes at`,
+                                    },
+                                }}
                             >
                                 {TIME_SLOTS.map((ts) => (
                                     <MenuItem key={ts} value={ts}>
@@ -257,7 +375,9 @@ const AvailabilityDowConfig = ({ dayOfWeek }: AvailabilityDowConfigProps) => {
                 variant="label"
                 sx={{ display: { xs: "none", sm: "none", md: "block" } }}
             >
-                5 × 2 hr windows · 15 slots
+                {day.is_open
+                    ? `${windows} × ${windowLengthMinutes / MINUTES_PER_HOUR} hr windows · ${slots} slots`
+                    : ""}
             </Typography>
         </Stack>
     );

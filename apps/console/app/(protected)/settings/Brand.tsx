@@ -1,12 +1,16 @@
 "use client";
 
 import CardContainer from "@/components/CardContainer";
-import { useOrganizations } from "@/hooks";
+import {
+    MAX_CORNER_RADIUS,
+    MIN_CORNER_RADIUS,
+    type BrandSettings,
+    type CompanyIdentity,
+} from "@/types/setting";
 import { normalizeHex, debounce } from "@homerepair/utility";
 import {
     alpha,
     Box,
-    Button,
     ButtonBase,
     Grid,
     InputAdornment,
@@ -15,15 +19,14 @@ import {
     Stack,
     TextField,
     Typography,
-    useTheme,
-    type Theme,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 
+/** The colour columns of company_brand_settings, in the order they're shown. */
 type ColorId =
-    | "primary"
-    | "secondary"
+    | "primary_color"
+    | "secondary_color"
     | "selected_fill"
     | "selected_text"
     | "body_text"
@@ -34,54 +37,45 @@ type ColorSelect = {
     id: ColorId;
     label: string;
     description: string;
-    /** Reads the live value off the theme so the swatch never drifts from it. */
-    value: (theme: Theme) => string;
 };
 
-type BrandColors = Record<ColorId, string>;
+type BrandColors = Pick<BrandSettings, ColorId>;
 
 const COLOR_SELECTS: ColorSelect[] = [
     {
-        id: "primary",
+        id: "primary_color",
         label: "Primary",
         description: "Buttons, progress bar, links",
-        value: (theme) => theme.palette.primary.main,
     },
     {
-        id: "secondary",
+        id: "secondary_color",
         label: "Secondary",
         description: "Accents and secondary marks",
-        value: (theme) => theme.palette.secondary.main,
     },
     {
         id: "selected_fill",
         label: "Selected Fill",
         description: "Chips and cards when chosen",
-        value: (theme) => theme.palette.secondary.main,
     },
     {
         id: "selected_text",
         label: "Selected Text",
         description: "Label color inside selections",
-        value: (theme) => theme.palette.secondary.contrastText,
     },
     {
         id: "body_text",
         label: "Body Text",
         description: "Headings and paragraph copy",
-        value: (theme) => theme.palette.text.primary,
     },
     {
         id: "button_text",
         label: "Button Text",
         description: "Label on primary buttons",
-        value: (theme) => theme.palette.primary.contrastText,
     },
     {
         id: "page_background",
         label: "Page Background",
         description: "Portal canvas behind content",
-        value: (theme) => theme.palette.background.default,
     },
 ];
 
@@ -241,7 +235,7 @@ const PortalPreview = ({
                     height: 8,
                     backgroundColor: colors.selected_fill,
                     "& .MuiLinearProgress-bar": {
-                        backgroundColor: colors.primary,
+                        backgroundColor: colors.primary_color,
                     },
                 }}
             />
@@ -268,7 +262,7 @@ const PortalPreview = ({
                                 borderRadius: innerRadius,
                                 border: "1px solid",
                                 borderColor: selected
-                                    ? colors.primary
+                                    ? colors.primary_color
                                     : alpha(colors.body_text, 0.15),
                                 backgroundColor: selected
                                     ? colors.selected_fill
@@ -295,7 +289,7 @@ const PortalPreview = ({
                                         height: 8,
                                         flexShrink: 0,
                                         borderRadius: "50%",
-                                        backgroundColor: colors.primary,
+                                        backgroundColor: colors.primary_color,
                                     }}
                                 />
                             )}
@@ -312,7 +306,7 @@ const PortalPreview = ({
                     borderRadius: 999,
                     fontSize: 12,
                     fontWeight: 700,
-                    backgroundColor: colors.secondary,
+                    backgroundColor: colors.secondary_color,
                     color: colors.selected_text,
                 }}
             >
@@ -326,7 +320,7 @@ const PortalPreview = ({
                     textAlign: "center",
                     fontSize: 15,
                     fontWeight: 650,
-                    backgroundColor: colors.primary,
+                    backgroundColor: colors.primary_color,
                     color: colors.button_text,
                 }}
             >
@@ -336,35 +330,20 @@ const PortalPreview = ({
     );
 };
 
-const Brand = () => {
-    const theme = useTheme();
+type BrandProps = {
+    company: CompanyIdentity;
+    brand: BrandSettings;
+    onCompanyChange: (patch: Partial<CompanyIdentity>) => void;
+    onBrandChange: (patch: Partial<BrandSettings>) => void;
+};
 
-    const defaults = useMemo(
-        () =>
-            Object.fromEntries(
-                COLOR_SELECTS.map((cs) => [
-                    cs.id,
-                    cs.value(theme).toUpperCase(),
-                ]),
-            ) as BrandColors,
-        [theme],
-    );
-    const defaultRadius = Number(theme.shape.borderRadius);
-    const { currentName, currentPhone } = useOrganizations();
-
-    const [colors, setColors] = useState<BrandColors>(defaults);
-    const [identity, setIdentity] = useState({
-        businessName: currentName ?? "",
-        phoneNumber: currentPhone ?? "",
-    });
-    const [radius, setRadius] = useState(defaultRadius);
-
-    useEffect(() => {
-        setIdentity({
-            businessName: currentName,
-            phoneNumber: currentPhone ?? "",
-        });
-    }, [currentName, currentPhone]);
+const Brand = ({
+    company,
+    brand,
+    onCompanyChange,
+    onBrandChange,
+}: BrandProps) => {
+    const radius = brand.corner_radius;
 
     return (
         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ width: "100%" }}>
@@ -380,12 +359,11 @@ const Brand = () => {
                                     <ColorRow
                                         key={cs.id}
                                         color={cs}
-                                        value={colors[cs.id]}
+                                        value={brand[cs.id]}
                                         onChange={(hex) =>
-                                            setColors((current) => ({
-                                                ...current,
+                                            onBrandChange({
                                                 [cs.id]: hex.toUpperCase(),
-                                            }))
+                                            })
                                         }
                                     />
                                 );
@@ -402,24 +380,24 @@ const Brand = () => {
                                 size="small"
                                 fullWidth
                                 label="Business name"
-                                value={identity.businessName}
+                                value={company.name}
                                 onChange={(event) =>
-                                    setIdentity((current) => ({
-                                        ...current,
-                                        businessName: event.target.value,
-                                    }))
+                                    onCompanyChange({
+                                        name: event.target.value,
+                                    })
                                 }
                             />
                             <TextField
                                 size="small"
                                 fullWidth
                                 label="Phone number"
-                                value={identity.phoneNumber}
+                                value={company.phone ?? ""}
                                 onChange={(event) =>
-                                    setIdentity((current) => ({
-                                        ...current,
-                                        phoneNumber: event.target.value,
-                                    }))
+                                    onCompanyChange({
+                                        // An emptied field means "no phone",
+                                        // which is what the column stores.
+                                        phone: event.target.value || null,
+                                    })
                                 }
                             />
                             <TextField
@@ -428,20 +406,23 @@ const Brand = () => {
                                 type="number"
                                 value={radius}
                                 onChange={(event) =>
-                                    setRadius(
-                                        Math.min(
-                                            24,
+                                    onBrandChange({
+                                        corner_radius: Math.min(
+                                            MAX_CORNER_RADIUS,
                                             Math.max(
-                                                0,
+                                                MIN_CORNER_RADIUS,
                                                 Number(event.target.value) || 0,
                                             ),
                                         ),
-                                    )
+                                    })
                                 }
-                                helperText="0–24px. Applies to cards, inputs, and buttons."
+                                helperText={`${MIN_CORNER_RADIUS}–${MAX_CORNER_RADIUS}px. Applies to cards, inputs, and buttons.`}
                                 sx={{ width: { xs: "100%", sm: 200 } }}
                                 slotProps={{
-                                    htmlInput: { min: 0, max: 24 },
+                                    htmlInput: {
+                                        min: MIN_CORNER_RADIUS,
+                                        max: MAX_CORNER_RADIUS,
+                                    },
                                     input: {
                                         endAdornment: (
                                             <InputAdornment position="end">
@@ -463,8 +444,8 @@ const Brand = () => {
                 >
                     <Box>
                         <PortalPreview
-                            colors={colors}
-                            businessName={identity.businessName}
+                            colors={brand}
+                            businessName={company.name}
                             radius={radius}
                         />
                     </Box>

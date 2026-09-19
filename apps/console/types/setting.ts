@@ -1,12 +1,7 @@
 // Types-only entry: this module is imported by client components, so it may
 // only import *types* from "@homerepair/data" — the root export pulls in
 // server-only plus the Prisma runtime.
-import type {
-    BrandRuleType,
-    Font,
-    SymptomRuleType,
-    Weekday,
-} from "@homerepair/data/types";
+import type { Font, Weekday } from "@homerepair/data/types";
 import { normalizeHex } from "@homerepair/utility";
 import z from "zod";
 
@@ -27,17 +22,6 @@ export const WEEKDAYS = [
 
 export const FONTS = ["Poppins"] as const satisfies readonly Font[];
 
-export const BRAND_RULE_TYPES = [
-    "Allow",
-    "Deny",
-    "Prefer",
-] as const satisfies readonly BrandRuleType[];
-
-export const SYMPTOM_RULE_TYPES = [
-    "Enabled",
-    "Disabled",
-] as const satisfies readonly SymptomRuleType[];
-
 /** Shared by the console's inputs and the API's validation, so they can't drift. */
 export const MIN_CORNER_RADIUS = 0;
 export const MAX_CORNER_RADIUS = 24;
@@ -45,8 +29,6 @@ export const MIN_JOBS_PER_WINDOW = 1;
 export const MAX_JOBS_PER_WINDOW = 10;
 /** Window lengths the booking flow can slice a day into, in minutes. */
 export const WINDOW_LENGTHS_MINUTES = [120, 180, 240] as const;
-export const MIN_JOB_DURATION_MINUTES = 15;
-export const MAX_JOB_DURATION_MINUTES = 480;
 
 /**
  * Defaults mirroring the schema's, used in two places: filling a response for a
@@ -109,39 +91,6 @@ export type HoursSettings = {
     days: DaySettings[];
 };
 
-export type ServiceSettings = {
-    id: string;
-    appliance_type_id: string;
-    appliance_type_name: string;
-    enabled: boolean;
-    job_duration_minutes: number;
-};
-
-export type BrandRuleSettings = {
-    brand_id: string;
-    brand_name: string;
-    /** null means the rule covers every appliance type for that brand. */
-    appliance_type_id: string | null;
-    appliance_type_name: string | null;
-    rule: BrandRuleType;
-};
-
-export type SymptomRuleSettings = {
-    symptom_id: string;
-    symptom_name: string;
-    rule: SymptomRuleType;
-};
-
-/**
- * Which jobs the intake flow will take and how long it books them for — the
- * brand/symptom rules and per-service durations, not technician dispatch.
- */
-export type RoutingSettings = {
-    services: ServiceSettings[];
-    brand_rules: BrandRuleSettings[];
-    symptom_rules: SymptomRuleSettings[];
-};
-
 export type CompanyIdentity = {
     id: string;
     slug: string;
@@ -155,7 +104,6 @@ export type CompanySettings = {
     company: CompanyIdentity;
     brand: BrandSettings;
     hours: HoursSettings;
-    routing: RoutingSettings;
 };
 
 /* ------------------------------------------------------------------ *
@@ -242,39 +190,6 @@ const hoursPatchSchema = z
     })
     .partial();
 
-const routingPatchSchema = z
-    .object({
-        /** Updates existing services by id; adding one isn't done here. */
-        services: z.array(
-            z.object({
-                id: z.string().min(1),
-                enabled: z.boolean().optional(),
-                job_duration_minutes: z
-                    .number()
-                    .int()
-                    .min(MIN_JOB_DURATION_MINUTES)
-                    .max(MAX_JOB_DURATION_MINUTES)
-                    .optional(),
-            }),
-        ),
-        /** Replaces the company's whole rule set — send every rule to keep. */
-        brand_rules: z.array(
-            z.object({
-                brand_id: z.string().min(1),
-                appliance_type_id: z.string().min(1).nullish(),
-                rule: z.enum(BRAND_RULE_TYPES),
-            }),
-        ),
-        /** Replaces the company's whole rule set — send every rule to keep. */
-        symptom_rules: z.array(
-            z.object({
-                symptom_id: z.string().min(1),
-                rule: z.enum(SYMPTOM_RULE_TYPES),
-            }),
-        ),
-    })
-    .partial();
-
 const companyPatchSchema = z
     .object({
         name: z.string().trim().min(1).max(120),
@@ -302,7 +217,6 @@ export const settingsPatchSchema = z
         company: companyPatchSchema,
         brand: brandPatchSchema,
         hours: hoursPatchSchema,
-        routing: routingPatchSchema,
     })
     .partial()
     .refine((patch) => Object.values(patch).some((section) => !!section), {

@@ -6,10 +6,10 @@ import { NextResponse } from "next/server";
 /**
  * GET /api/company/[companyId]/setting
  *
- * The company's branding, hours and routing settings — everything the console's
- * Settings page renders. Settings belong to a company rather than to the
- * organization it sits under: two companies in one org have their own palette,
- * their own week, and their own view of which jobs they'll take.
+ * The company's branding and hours — everything the console's Settings page
+ * renders. Settings belong to a company rather than to the organization it
+ * sits under: two companies in one org have their own palette and their own
+ * week.
  */
 export const GET = withCompanyAccess(async (_request, { companyId }) => {
     try {
@@ -47,11 +47,9 @@ export const PATCH = withCompanyAccess(async (request, { companyId }) => {
 
         const updated = await updateCompanySettings(companyId, result.data);
 
+        // The only way this fails is the company vanishing mid-request.
         if (!updated.success)
-            return NextResponse.json(
-                { error: updated.error },
-                { status: 400 },
-            );
+            return NextResponse.json({ error: "Not found" }, { status: 404 });
 
         return NextResponse.json(updated.value);
     } catch (error) {
