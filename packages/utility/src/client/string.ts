@@ -49,3 +49,21 @@ export const formatPhoneNumberProgressive = (input: string) => {
     }
     return result;
 };
+
+/**
+ * Accepts what someone actually types into a hex field — `0f6e56`, `#0F6`,
+ * stray whitespace — and returns a canonical `#RRGGBB`, or null if it isn't a
+ * hex colour at all (in which case the field snaps back to its last good value).
+ */
+export const normalizeHex = (input: string): string | null => {
+    const raw = input.trim().replace(/^#/, "");
+
+    if (/^[0-9a-fA-F]{3}$/.test(raw)) {
+        return `#${raw
+            .split("")
+            .map((char) => char + char)
+            .join("")}`.toUpperCase();
+    }
+
+    return /^[0-9a-fA-F]{6}$/.test(raw) ? `#${raw}`.toUpperCase() : null;
+};

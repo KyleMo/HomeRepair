@@ -24,7 +24,7 @@ const IssueSelection = () => {
     }
 
     const handleBrandClick = (id?: string) => {
-        dispatch({ type: "update_repair", repair: { ...repair, modelId: id } });
+        dispatch({ type: "update_repair", repair: { ...repair, brandId: id } });
     };
 
     return (

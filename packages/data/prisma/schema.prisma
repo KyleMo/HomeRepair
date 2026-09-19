@@ -55,7 +55,7 @@ model Company {
 
   booking_setting  CompanyBookingSetting?
   brand_setting    CompanyBrandSetting?
-  bookings        CompanyBooking[]
+  bookings         CompanyBooking[]
   memberships      Membership[]
   company_services CompanyService[]
   appliance_types  ApplianceType[]
@@ -63,7 +63,7 @@ model Company {
   brand_rules      CompanyBrandRule[]
   symptoms         Symptom[]
   symptom_rules    CompanySymptomRule[]
-  customers Customer[]
+  customers        Customer[]
 
   @@unique([address_id])
   @@index([organization_id])
@@ -129,7 +129,7 @@ model CompanyService {
   company_id        String
   company           Company       @relation(fields: [company_id], references: [id])
 
-  bookings CompanyBooking[]
+  bookings           CompanyBooking[]
   duration_overrides CompanyServiceDurationOverride[]
 
   @@unique([company_id, appliance_type_id])
@@ -169,8 +169,8 @@ model CompanyBookingSetting {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  default_window_length_minutes   Int
-  allowed_jobs_per_window Int
+  default_window_length_minutes Int
+  allowed_jobs_per_window       Int
 
   company_id String
   company    Company @relation(fields: [company_id], references: [id])
@@ -196,8 +196,8 @@ model DayOfWeekSetting {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  is_open        Boolean
-  week_day  Weekday
+  is_open  Boolean
+  week_day Weekday
 
   open_at  String @default("09:00") @db.VarChar(5)
   close_at String @default("17:00") @db.VarChar(5)
@@ -221,36 +221,37 @@ model CompanyBooking {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  status BookingStatus @default(Scheduled)
-  completed_at DateTime?
-  cancelled_at DateTime?
-  start_time DateTime
-  end_time DateTime
-  booked_timezone String
+  status          BookingStatus @default(Scheduled)
+  completed_at    DateTime?
+  cancelled_at    DateTime?
+  start_time      DateTime
+  end_time        DateTime
+  // IANA identifier
+  booked_timezone String 
 
   // Address Snapshot
-  line1 String
-  line2 String? 
+  line1       String
+  line2       String?
   city        String
   // ISO 3166-2
-  state    String   @db.VarChar(3)
-  postal_code String @db.VarChar(10)
+  state       String   @db.VarChar(3)
+  postal_code String   @db.VarChar(10)
   // ISO 3166-1 alpha-2
-  country     String @db.VarChar(2) @default("US")
-  latitude  Decimal? @db.Decimal(9, 6)
-  longitude Decimal? @db.Decimal(9, 6)
+  country     String   @default("US") @db.VarChar(2)
+  latitude    Decimal? @db.Decimal(9, 6)
+  longitude   Decimal? @db.Decimal(9, 6)
 
   company_service_id String
-  company_service CompanyService @relation(fields: [company_service_id], references: [id])
+  company_service    CompanyService @relation(fields: [company_service_id], references: [id])
 
   appliance_brand_id String?
-  appliance_brand Brand? @relation(fields: [appliance_brand_id], references: [id])
+  appliance_brand    Brand?  @relation(fields: [appliance_brand_id], references: [id])
 
   company_id String
   company    Company @relation(fields: [company_id], references: [id])
 
   customer_id String
-  customer Customer @relation(fields: [customer_id], references: [id])
+  customer    Customer @relation(fields: [customer_id], references: [id])
 
   booking_symptoms BookingSymptom[]
 
@@ -266,10 +267,10 @@ model BookingSymptom {
   updated_at DateTime @updatedAt
 
   company_booking_id String
-  company_booking CompanyBooking @relation(fields: [company_booking_id], references: [id])
+  company_booking    CompanyBooking @relation(fields: [company_booking_id], references: [id])
 
   symptom_id String
-  symptom Symptom @relation(fields: [symptom_id], references: [id])
+  symptom    Symptom @relation(fields: [symptom_id], references: [id])
 
   @@unique([company_booking_id, symptom_id])
   @@map("booking_symptoms")
@@ -280,16 +281,16 @@ model Customer {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  phone String
+  phone      String
   first_name String
-  last_name String
-  email String?
+  last_name  String
+  email      String?
 
   company_id String
   company    Company @relation(fields: [company_id], references: [id])
 
   addresses CustomerAddress[]
-  bookings CompanyBooking[]
+  bookings  CompanyBooking[]
 
   @@unique([company_id, phone])
   @@map("customers")
@@ -442,7 +443,7 @@ model Brand {
   service_duration_overrides CompanyServiceDurationOverride[]
   brand_rules                CompanyBrandRule[]
   symptoms                   Symptom[]
-  bookings                     CompanyBooking[]
+  bookings                   CompanyBooking[]
 
   @@index([company_id])
   @@map("brands")
@@ -453,7 +454,7 @@ model CustomerAddress {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  label String?
+  label      String?
   is_primary Boolean @default(false)
 
   // Street address
@@ -462,18 +463,18 @@ model CustomerAddress {
 
   city        String
   // ISO 3166-2
-  state    String   @db.VarChar(3)
+  state       String @db.VarChar(3)
   postal_code String @db.VarChar(10)
   // ISO 3166-1 alpha-2
-  country     String @db.VarChar(2) @default("US")
+  country     String @default("US") @db.VarChar(2)
 
   // Geocoding — powers tech dispatch, routing, and distance/radius search.
   // Nullable: populated asynchronously after the address is entered.
   latitude  Decimal? @db.Decimal(9, 6)
   longitude Decimal? @db.Decimal(9, 6)
 
-  customer_id String 
-  customer Customer @relation(fields: [customer_id], references: [id])
+  customer_id String
+  customer    Customer @relation(fields: [customer_id], references: [id])
 
   @@index([customer_id])
   @@map("customer_addresses")
@@ -490,10 +491,10 @@ model CompanyAddress {
 
   city        String
   // ISO 3166-2
-  state    String   @db.VarChar(3)
+  state       String @db.VarChar(3)
   postal_code String @db.VarChar(10)
   // ISO 3166-1 alpha-2
-  country     String @db.VarChar(2) @default("US")
+  country     String @default("US") @db.VarChar(2)
 
   // Geocoding — powers tech dispatch, routing, and distance/radius search.
   // Nullable: populated asynchronously after the address is entered.
@@ -501,5 +502,6 @@ model CompanyAddress {
   longitude Decimal? @db.Decimal(9, 6)
 
   company Company?
+
   @@map("company_addresses")
 }

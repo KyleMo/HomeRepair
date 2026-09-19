@@ -3,10 +3,11 @@ import Header from "../components/layout/Header";
 import styles from "./page.module.css";
 import { useFormContext } from "@/context/hooks";
 import Footer from "@/components/layout/Footer";
+import { allSteps } from "@/models/Form";
 
 export default function PortalHome() {
     const { form } = useFormContext();
-    const step = form.steps[form.cursor.stepId];
+    const step = allSteps[form.cursor.stepId];
 
     if (!step) {
         return <h2>Failed to find current step</h2>;
