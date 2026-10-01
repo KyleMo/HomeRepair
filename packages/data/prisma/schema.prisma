@@ -280,8 +280,8 @@ model CompanyBookingAttempt {
 
   booking_attempt_steps BookingAttemptStep[]
 
-  // Ordered by company_id, then created_at — the funnel reads one company over
-  // a date range, so that is one slice of the index, already in sort order.
+  // also indexing by created_at is optimal for in order 
+  // searching which is what we will be using it for
   @@index([company_id, created_at])
   @@map("company_booking_attempts")
 }
@@ -291,19 +291,12 @@ model BookingAttemptStep {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  /// The portal's step id, e.g. "hr_brand" (apps/portal/models/Form.ts).
-  /// Deliberately not a foreign key: the flow's screens are defined in code,
-  /// and a screen that is renamed or retired must not orphan past attempts.
   step_id    String
   step_label String
 
-  /// Which repair the screen belonged to, for the per-repair steps (brand,
-  /// issue, model tag). Null for the global ones. It's the portal's
-  /// client-generated Repair id, so again not a foreign key.
   repair_id String?
 
-  /// Position in the attempt, starting at 1. Revisits get their own number,
-  /// so ordering by it replays the session in the order it happened.
+  // revisits get their own number so going back a step will continue to increment
   sequence Int
 
   entered_at DateTime
@@ -311,9 +304,6 @@ model BookingAttemptStep {
   skipped    Boolean   @default(false)
 
   company_booking_attempt_id String
-  // Cascade so an attempt can be deleted as one unit — these rows accumulate
-  // per visitor, and any retention sweep would otherwise be blocked by the
-  // foreign key (Prisma defaults a required relation to Restrict).
   company_booking_attempt    CompanyBookingAttempt @relation(fields: [company_booking_attempt_id], references: [id], onDelete: Cascade)
 
   @@unique([company_booking_attempt_id, sequence])
