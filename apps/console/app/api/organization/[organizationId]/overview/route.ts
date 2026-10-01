@@ -1,39 +1,17 @@
 import { withOrgAccess } from "@/lib/api";
-import { getBookings } from "@/lib/db/bookings";
-import { queryParamterAccumulater } from "@/lib/db/get";
-import { bookingQuerySchema } from "@/types/booking";
-import { groupBookingsByDate } from "@homerepair/utility";
 import { NextResponse } from "next/server";
 
-export const GET = withOrgAccess(
-    async (_request, { companyIds, groupingTimezone }) => {
-        try {
-            const result = bookingQuerySchema.safeParse(
-                queryParamterAccumulater(
-                    _request.nextUrl.searchParams.entries(),
-                ),
-            );
-
-            if (!result.success)
-                return NextResponse.json(
-                    { error: result.error.message },
-                    { status: 400 },
-                );
-
-            const bookings = await getBookings({ ...result.data, companyIds });
-            const days = groupBookingsByDate(bookings, groupingTimezone);
-
-            return NextResponse.json({
-                timezone: groupingTimezone,
-                days,
-            });
-        } catch (error) {
-            return NextResponse.json(
-                { error },
-                {
-                    status: 500,
-                },
-            );
-        }
-    },
-);
+export const GET = withOrgAccess(async (_request) => {
+    try {
+        return NextResponse.json({
+            data: "ok",
+        });
+    } catch (error) {
+        return NextResponse.json(
+            { error },
+            {
+                status: 500,
+            },
+        );
+    }
+});

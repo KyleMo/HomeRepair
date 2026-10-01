@@ -19,7 +19,7 @@ export const useFormContext = (): {
 export const useClient = () => {
     const ctx = useContext(ClientContext);
     if (!ctx) {
-        throw new Error("useClientId must be used within ClientProvider");
+        throw new Error("useClient must be used within ClientProvider");
     }
     return ctx;
 };

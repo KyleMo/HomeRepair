@@ -3,8 +3,9 @@ import {
     LocalSession,
     SessionState,
     localStorageSessionKey,
-} from "@/models/Form";
-import type { AttemptStepEvent, SessionRecordPayload } from "@/models/Session";
+    type AttemptStepEvent,
+    type SessionRecordPayload,
+} from "@/models/Session";
 import { ReactNode, createContext, useRef } from "react";
 import { useClient } from "./hooks";
 
@@ -12,7 +13,6 @@ export const SessionContext = createContext<SessionState | null>(null);
 
 const newSessionId = (): string =>
     crypto.randomUUID?.() ??
-    // Safari < 15.4 has getRandomValues but not randomUUID
     Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) =>
         b.toString(16).padStart(2, "0"),
     ).join("");
@@ -46,26 +46,12 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    /**
-     * Screen visits waiting to be sent. Buffered rather than sent per event so
-     * a burst of navigation is one request, and so visits made before the
-     * session exists — the appliance screen, which is what creates it — aren't
-     * lost.
-     */
+    // screen progression are sent in groups the closing screen and the now opening screen
     const pendingRef = useRef<AttemptStepEvent[]>([]);
-
-    /**
-     * In-memory mirror of the stored counter, so visits recorded before a
-     * session exists — the appliance screen, which is what creates it — still
-     * get increasing numbers.
-     */
+    // step sequence ref (might be in localstorage)
     const sequenceRef = useRef(0);
 
     const nextSequence = () => {
-        // getSession adopts a stored session, so a reload picks up where the
-        // previous page load left off rather than restarting at 1. An expired
-        // session returns null, and starting again at 1 is then correct: the
-        // next event belongs to a new attempt with its own token.
         const session = getSession();
         const sequence =
             Math.max(sequenceRef.current, session?.lastSequence ?? 0) + 1;
@@ -77,8 +63,6 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const queueStep = (event: AttemptStepEvent) => {
-        // Re-queueing a sequence replaces it: the same visit is queued twice,
-        // once open and once with its exited_at, and only the later one matters.
         pendingRef.current = [
             ...pendingRef.current.filter((e) => e.sequence !== event.sequence),
             event,
@@ -98,8 +82,6 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
             steps,
         };
 
-        // Cleared up front so visits made while this request is in flight queue
-        // behind it rather than being sent twice.
         pendingRef.current = [];
 
         try {
@@ -107,16 +89,12 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
-                // Lets the request outlive the page when this runs from
-                // pagehide — the abandonment case, which is the one that
-                // matters most.
+                // allows this to run after the page is hidden or left
                 keepalive: true,
             });
 
             if (!response.ok) throw new Error(String(response.status));
         } catch (error) {
-            // Put them back for the next flush. The rows upsert on
-            // (attempt, sequence), so resending can't duplicate anything.
             pendingRef.current = [...steps, ...pendingRef.current];
             console.warn(`Failed to record session: ${error}`);
         }
@@ -127,13 +105,11 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
             if (typeof window === "undefined" || !sessionRef.current?.sessionId)
                 return;
 
-            // if the session is expired, create new session and record
             if (
                 !!sessionRef.current.expiry &&
                 Date.now() > Date.parse(sessionRef.current.expiry)
             )
                 createSession();
-            // trigger expiry to update
             else
                 setSession({
                     sessionId: sessionRef.current.sessionId,
@@ -148,8 +124,6 @@ const SessionProvider = ({ children }: { children: ReactNode }) => {
         setSession({
             sessionId: newSessionId(),
             clientId: clientId as string,
-            // Visits already buffered for this page load belong to this new
-            // attempt, so the counter carries over rather than resetting.
             lastSequence: sequenceRef.current,
         });
     };

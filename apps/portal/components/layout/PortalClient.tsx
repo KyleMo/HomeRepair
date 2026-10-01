@@ -9,6 +9,7 @@ import ClientProvider from "@/context/ClientProvider";
 import FormContextProvider from "@/context/FormContextProvider";
 import SessionProvider from "@/context/SessionProvider";
 import AttemptTracker from "./AttemptTracker";
+import PortalForm from "./PortalForm";
 
 export default function PortalHome({
     clientId,
@@ -24,37 +25,10 @@ export default function PortalHome({
                     <FormContextProvider>
                         {/* Renders nothing; watches the cursor and records it. */}
                         <AttemptTracker />
-                        <InnerForm />
+                        <PortalForm />
                     </FormContextProvider>
                 </SessionProvider>
             </ClientProvider>
         </PortalBase>
     );
 }
-
-const InnerForm = () => {
-    const { form } = useFormContext();
-    const step = allSteps[form.cursor.stepId];
-
-    if (!step) {
-        return <h2>Failed to find current step</h2>;
-    }
-    return (
-        <>
-            <Header progress={form.progress} />
-            <step.Component />
-            {step.hasFooter && <Footer />}
-            <div
-                style={{
-                    position: "fixed",
-                    fontSize: 10,
-                    marginLeft: 10,
-                    bottom: 5,
-                    left: 5,
-                }}
-            >
-                Powered by HomeRepair
-            </div>
-        </>
-    );
-};

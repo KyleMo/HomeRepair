@@ -2,13 +2,12 @@ import { CompanyId } from "@/types/organization";
 import {
     CompanySettings,
     DEFAULT_BOOKING_SETTINGS,
-    DEFAULT_BRAND_SETTINGS,
     DEFAULT_DAY_SETTINGS,
     DaySettings,
     SettingsPatch,
     WEEKDAYS,
 } from "@/types/setting";
-import { prisma } from "@homerepair/data";
+import { DEFAULT_COMPANY_BRANDING, prisma } from "@homerepair/data";
 import { Result } from "@homerepair/utility/types";
 
 export const getCompanySettings = async (
@@ -24,7 +23,7 @@ export const getCompanySettings = async (
 
     if (!company) return null;
 
-    const brand = company.brand_setting ?? DEFAULT_BRAND_SETTINGS;
+    const brand = company.brand_setting ?? DEFAULT_COMPANY_BRANDING;
     const booking = company.booking_setting ?? DEFAULT_BOOKING_SETTINGS;
 
     return {
@@ -107,7 +106,7 @@ export const updateCompanySettings = async (
                 where: { company_id: companyId },
                 create: {
                     company_id: companyId,
-                    ...DEFAULT_BRAND_SETTINGS,
+                    ...DEFAULT_COMPANY_BRANDING,
                     ...patch.brand,
                 },
                 update: patch.brand,

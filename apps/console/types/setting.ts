@@ -1,8 +1,4 @@
-// Types-only entry: this module is imported by client components, so it may
-// only import *types* from "@homerepair/data" — the root export pulls in
-// server-only plus the Prisma runtime.
 import {
-    DEFAULT_COMPANY_BRANDING,
     type CompanyBranding,
     type Font,
     type Weekday,
@@ -34,13 +30,6 @@ export const MIN_JOBS_PER_WINDOW = 1;
 export const MAX_JOBS_PER_WINDOW = 10;
 /** Window lengths the booking flow can slice a day into, in minutes. */
 export const WINDOW_LENGTHS_MINUTES = [120, 180, 240] as const;
-
-/**
- * The palette and its defaults are defined once in @homerepair/data/types, so
- * the console's editor and the portal that renders the result can't drift.
- * Re-exported under the console's own names to keep call sites reading locally.
- */
-export const DEFAULT_BRAND_SETTINGS = DEFAULT_COMPANY_BRANDING;
 
 export const DEFAULT_BOOKING_SETTINGS = {
     default_window_length_minutes: 120,
@@ -185,9 +174,13 @@ const companyPatchSchema = z
             .transform((phone) => phone || null),
         timezone: z
             .string()
-            .refine((zone) => Intl.supportedValuesOf("timeZone").includes(zone), {
-                message: "Must be an IANA timezone, e.g. America/Los_Angeles",
-            }),
+            .refine(
+                (zone) => Intl.supportedValuesOf("timeZone").includes(zone),
+                {
+                    message:
+                        "Must be an IANA timezone, e.g. America/Los_Angeles",
+                },
+            ),
     })
     .partial();
 

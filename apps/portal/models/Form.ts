@@ -236,25 +236,6 @@ export const buildStepScreens = (state: FormState): Screen[] => {
     ];
 };
 
-type LocalStorageSessionKey = "ds_session_id";
-export const localStorageSessionKey: LocalStorageSessionKey = "ds_session_id";
-export type IsoDateString = string;
-export type LocalSession = {
-    clientId: string;
-    sessionId: string;
-    lastActivity: IsoDateString;
-    expiry: IsoDateString;
-    /**
-     * Highest screen-visit number recorded for this session.
-     *
-     * Stored rather than counted in memory because the step rows are keyed on
-     * (attempt, sequence): a reload mid-session would otherwise restart at 1
-     * and the upsert would overwrite the session's first visits instead of
-     * appending to them.
-     */
-    lastSequence: number;
-};
-
 export type FormAction =
     | { type: "set_session_id"; sessionId: string }
     | { type: "set_customer_detail"; customerDetail: CustomerDetail }
@@ -321,28 +302,6 @@ export type FormState = {
     progress: number;
     // if we have already seen a screen and its filter out state is true we still want to keep the screen
     seenScreen: { [key: StepId]: boolean };
-};
-
-export type SessionState = {
-    getSession: () => LocalSession | null;
-    setSession: (
-        session: Partial<LocalSession> & { sessionId: string },
-    ) => void;
-    touch: () => void;
-    /**
-     * The number for the next screen visit, continuing across page loads for a
-     * resumed session.
-     */
-    nextSequence: () => number;
-    /** Buffers a screen visit. Nothing is sent until `record` runs. */
-    queueStep: (event: AttemptStepEvent) => void;
-    /**
-     * Flushes the buffered visits. Safe to call at any time: with no session or
-     * nothing buffered it does nothing, and a failed send leaves the events
-     * queued for the next attempt.
-     */
-    record: (options?: { completed?: boolean }) => Promise<void>;
-    init: () => void;
 };
 
 export type FormStep = {
