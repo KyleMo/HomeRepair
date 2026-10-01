@@ -19,7 +19,7 @@ export default function PortalPreview() {
             <div>
                 <Script
                     src="http://localhost:3001/loader.js"
-                    data-client-id="abc123"
+                    data-client-id="kyles_company_1"
                     defer
                 />
                 <div id="homerepair-portal"></div>

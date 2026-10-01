@@ -18,6 +18,23 @@ const screenToCursor = (screen?: Screen): StepCursor | null => {
     }
 };
 
+type ScreenLocation = {
+    index: number;
+    /** False when the cursor's own screen is gone and this is a recovery. */
+    exact: boolean;
+};
+
+const locateCursor = (
+    screens: Screen[],
+    cursor: StepCursor,
+): ScreenLocation => {
+    const exact = indexOfStep(screens, cursor);
+    if (exact !== -1) return { index: exact, exact: true };
+
+    const sameStep = screens.findIndex((screen) => screen.id === cursor.stepId);
+    return { index: sameStep === -1 ? 0 : sameStep, exact: false };
+};
+
 export function formReducer(state: FormState, action: FormAction): FormState {
     switch (action.type) {
         case "set_customer_detail": {
@@ -46,10 +63,11 @@ export function formReducer(state: FormState, action: FormAction): FormState {
             const repairs = [...state.repairs];
             const index = repairs.findIndex((r) => r.id === action.repair.id);
 
-            if (index <= -1) {
+            if (index === -1) {
                 console.warn(
                     `Failed to update repair with ID: ${action.repair.id}`,
                 );
+                return state;
             }
 
             repairs[index] = action.repair;
@@ -62,17 +80,22 @@ export function formReducer(state: FormState, action: FormAction): FormState {
             const currStep = allSteps[state.cursor.stepId];
             if (!currStep) return state;
 
-            // update seen screens
-            if (!state.seenScreen[currStep.id])
-                state.seenScreen = {
-                    ...state.seenScreen,
-                    [currStep.id]: true,
-                };
+            const seenScreen = { ...state.seenScreen, [currStep.id]: true };
 
-            const screensArray: Screen[] = buildStepScreens(state);
-            const currIndex = indexOfStep(screensArray, state.cursor);
+            const screensArray: Screen[] = buildStepScreens({
+                ...state,
+                seenScreen,
+            });
+            const { index: currIndex, exact } = locateCursor(
+                screensArray,
+                state.cursor,
+            );
 
-            const nextIndex = Math.min(currIndex + 1, screensArray.length - 1);
+            // A recovered cursor moves *to* the surviving screen rather than
+            // past it — the customer never completed the one that vanished.
+            const nextIndex = exact
+                ? Math.min(currIndex + 1, screensArray.length - 1)
+                : currIndex;
             const next = screensArray[nextIndex];
 
             if (!next) return state;
@@ -85,6 +108,7 @@ export function formReducer(state: FormState, action: FormAction): FormState {
 
             return {
                 ...state,
+                seenScreen,
                 cursor: newCursor,
                 progress,
             };
@@ -93,10 +117,18 @@ export function formReducer(state: FormState, action: FormAction): FormState {
             const currStep = allSteps[state.cursor.stepId];
             if (!currStep) return state;
 
-            const screensArray: Screen[] = buildStepScreens(state);
-            const currIndex = indexOfStep(screensArray, state.cursor);
+            const seenScreen = { ...state.seenScreen, [currStep.id]: true };
 
-            const prevIndex = Math.max(currIndex - 1, 0);
+            const screensArray: Screen[] = buildStepScreens({
+                ...state,
+                seenScreen,
+            });
+            const { index: currIndex, exact } = locateCursor(
+                screensArray,
+                state.cursor,
+            );
+
+            const prevIndex = exact ? Math.max(currIndex - 1, 0) : currIndex;
             const prev = screensArray[prevIndex];
 
             if (!prev) return state;
@@ -109,6 +141,7 @@ export function formReducer(state: FormState, action: FormAction): FormState {
 
             return {
                 ...state,
+                seenScreen,
                 cursor: prevCursor,
                 progress,
             };

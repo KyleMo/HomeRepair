@@ -1,7 +1,12 @@
 // Types-only entry: this module is imported by client components, so it may
 // only import *types* from "@homerepair/data" — the root export pulls in
 // server-only plus the Prisma runtime.
-import type { Font, Weekday } from "@homerepair/data/types";
+import {
+    DEFAULT_COMPANY_BRANDING,
+    type CompanyBranding,
+    type Font,
+    type Weekday,
+} from "@homerepair/data/types";
 import { normalizeHex } from "@homerepair/utility";
 import z from "zod";
 
@@ -31,22 +36,11 @@ export const MAX_JOBS_PER_WINDOW = 10;
 export const WINDOW_LENGTHS_MINUTES = [120, 180, 240] as const;
 
 /**
- * Defaults mirroring the schema's, used in two places: filling a response for a
- * company whose settings row hasn't been created yet, and as the create half of
- * the upsert when that company is first saved. Keep in step with schema.prisma.
+ * The palette and its defaults are defined once in @homerepair/data/types, so
+ * the console's editor and the portal that renders the result can't drift.
+ * Re-exported under the console's own names to keep call sites reading locally.
  */
-export const DEFAULT_BRAND_SETTINGS = {
-    primary_color: "#0F6E56",
-    secondary_color: "#E1F5EE",
-    selected_fill: "#E1F5EE",
-    selected_text: "#085041",
-    body_text: "#000000",
-    button_text: "#FFFFFF",
-    page_background: "#F5F7F6",
-    corner_radius: 12,
-    font: "Poppins" as Font,
-    logo_url: null,
-} as const;
+export const DEFAULT_BRAND_SETTINGS = DEFAULT_COMPANY_BRANDING;
 
 export const DEFAULT_BOOKING_SETTINGS = {
     default_window_length_minutes: 120,
@@ -63,18 +57,7 @@ export const DEFAULT_DAY_SETTINGS = {
  * Response — GET /api/company/[companyId]/setting
  * ------------------------------------------------------------------ */
 
-export type BrandSettings = {
-    primary_color: string;
-    secondary_color: string;
-    selected_fill: string;
-    selected_text: string;
-    body_text: string;
-    button_text: string;
-    page_background: string;
-    corner_radius: number;
-    font: Font;
-    logo_url: string | null;
-};
+export type BrandSettings = CompanyBranding;
 
 /** One row per weekday, always all seven, ordered Sunday first. */
 export type DaySettings = {
