@@ -20,6 +20,7 @@ import {
     WineCoolerIcon,
 } from "@/components/icons";
 import ConfirmBooking from "@/components/steps/ConfirmBooking";
+import type { AttemptStepEvent } from "./Session";
 
 export type StepId = string;
 // UUID
@@ -34,6 +35,7 @@ export type ListItem = { id: string; label: string };
 export const globalInitSteps: FormStep[] = [
     {
         id: FIRST_FORM_STEP_ID,
+        label: "Appliance Selection",
         title: "What needs repair?",
         subtitle: "Tap the appliance(s) giving you trouble.",
         validate: (state: FormState) => {
@@ -52,6 +54,7 @@ export const globalInitSteps: FormStep[] = [
 const perRepairSteps: FormStep[] = [
     {
         id: "hr_brand",
+        label: "Brand Selection",
         Component: BrandSelection,
         validate: (form: FormState) => {
             const repair = form.repairs.find(
@@ -73,6 +76,7 @@ const perRepairSteps: FormStep[] = [
     },
     {
         id: "hr_issue_select",
+        label: "Issue Selection",
         Component: IssueSelection,
         validate: () => {
             return { success: true, value: "ok" };
@@ -82,6 +86,7 @@ const perRepairSteps: FormStep[] = [
     },
     {
         id: "hr_snap_model_tag",
+        label: "Model Tag Input",
         Component: SnapModelTag,
         validate: () => {
             return { success: true, value: "ok" };
@@ -112,6 +117,7 @@ const globalFinalSteps: FormStep[] = [
     // },
     {
         id: "hr_address_input",
+        label: "Address Input",
         validate: (state) => {
             if (
                 !/(^\d{5}$)|(^\d{5}-\d{4}$)/.test(
@@ -146,6 +152,7 @@ const globalFinalSteps: FormStep[] = [
     // },
     {
         id: "hr_arrival_window",
+        label: "Arrival Selection",
         Component: DateSelect,
         validate: () => {
             return { success: true, value: "ok" };
@@ -155,6 +162,7 @@ const globalFinalSteps: FormStep[] = [
     },
     {
         id: "hr_confirm_booking",
+        label: "Confirm Booking",
         Component: ConfirmBooking,
         validate: () => {
             return { success: true, value: "ok" };
@@ -165,6 +173,7 @@ const globalFinalSteps: FormStep[] = [
     },
     {
         id: "hr_success_step",
+        label: "Success",
         Component: Confirm,
         validate: () => {
             return { success: true, value: "ok" };
@@ -227,7 +236,27 @@ export const buildStepScreens = (state: FormState): Screen[] => {
     ];
 };
 
+type LocalStorageSessionKey = "ds_session_id";
+export const localStorageSessionKey: LocalStorageSessionKey = "ds_session_id";
+export type IsoDateString = string;
+export type LocalSession = {
+    clientId: string;
+    sessionId: string;
+    lastActivity: IsoDateString;
+    expiry: IsoDateString;
+    /**
+     * Highest screen-visit number recorded for this session.
+     *
+     * Stored rather than counted in memory because the step rows are keyed on
+     * (attempt, sequence): a reload mid-session would otherwise restart at 1
+     * and the upsert would overwrite the session's first visits instead of
+     * appending to them.
+     */
+    lastSequence: number;
+};
+
 export type FormAction =
+    | { type: "set_session_id"; sessionId: string }
     | { type: "set_customer_detail"; customerDetail: CustomerDetail }
     | { type: "set_phone"; phone: string }
     | { type: "set_progress"; progress: number }
@@ -294,8 +323,31 @@ export type FormState = {
     seenScreen: { [key: StepId]: boolean };
 };
 
+export type SessionState = {
+    getSession: () => LocalSession | null;
+    setSession: (
+        session: Partial<LocalSession> & { sessionId: string },
+    ) => void;
+    touch: () => void;
+    /**
+     * The number for the next screen visit, continuing across page loads for a
+     * resumed session.
+     */
+    nextSequence: () => number;
+    /** Buffers a screen visit. Nothing is sent until `record` runs. */
+    queueStep: (event: AttemptStepEvent) => void;
+    /**
+     * Flushes the buffered visits. Safe to call at any time: with no session or
+     * nothing buffered it does nothing, and a failed send leaves the events
+     * queued for the next attempt.
+     */
+    record: (options?: { completed?: boolean }) => Promise<void>;
+    init: () => void;
+};
+
 export type FormStep = {
     id: StepId;
+    label: string;
     validate: (state: FormState) => Result<string>;
     includeInFlow?: (state: FormState) => boolean;
     hasFooter: boolean;

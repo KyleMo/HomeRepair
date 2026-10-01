@@ -24,12 +24,12 @@ const ApplianceSelection = () => {
                                 type="button"
                                 className={styles.card}
                                 aria-pressed={active}
-                                onClick={() =>
+                                onClick={() => {
                                     dispatch({
                                         type: "toggle_repair",
                                         repair: { id, label, issues: [] },
-                                    })
-                                }
+                                    });
+                                }}
                             >
                                 <span className={styles.iconWrap}>
                                     <Icon className={styles.icon} />
