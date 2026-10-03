@@ -7,6 +7,6 @@
 .listOption {
     width: 100%;
     font-size: 1.25rem;
-    border-radius: 2px solid #989898;
+    border-radius: 2px solid var(--ds-color-text-muted);
     padding: 1rem 1.25rem;
 }

@@ -118,7 +118,8 @@ const AddressInput = () => {
                     height="24px"
                     viewBox="0 -960 960 960"
                     width="24px"
-                    fill="#afafaf"
+                    fill="currentColor"
+                    className={styles.muteText}
                 />
                 <span className={styles.muteText}>
                     Serving Pasadena, Glendale, Burbank

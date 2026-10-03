@@ -1,5 +1,5 @@
 .header {
-    background: var(--hr-color-bg);
+    background: var(--ds-color-surface);
     height: 55px;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
@@ -10,8 +10,8 @@
 .bar {
     display: flex;
     align-items: center;
-    gap: var(--hr-space-3);
-    padding: var(--hr-space-3) var(--hr-space-5);
+    gap: var(--ds-space-3);
+    padding: var(--ds-space-3) var(--ds-space-5);
     flex-grow: 1;
 }
 
@@ -22,8 +22,8 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: var(--hr-color-brand);
-    color: #fff;
+    background: var(--ds-color-primary);
+    color: var(--ds-color-button-text);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -34,7 +34,7 @@
     min-width: 0;
     font-size: 1rem;
     font-weight: 500;
-    color: var(--hr-color-fg);
+    color: var(--ds-color-text);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -44,8 +44,8 @@
     flex: none;
     display: inline-flex;
     align-items: center;
-    gap: var(--hr-space-1);
-    color: var(--hr-color-accent);
+    gap: var(--ds-space-1);
+    color: var(--ds-color-primary);
     font-size: 0.85rem;
     font-weight: 500;
     text-decoration: none;
@@ -63,14 +63,14 @@
 
 .progress {
     min-height: 3px;
-    background: var(--hr-color-track);
+    background: var(--ds-color-track);
     overflow: hidden;
 }
 
 .progressFill {
     display: block;
     height: 100%;
-    background: var(--hr-color-brand);
+    background: var(--ds-color-primary);
     border-radius: 0 2px 2px 0;
     transition: width 0.3s ease;
 }

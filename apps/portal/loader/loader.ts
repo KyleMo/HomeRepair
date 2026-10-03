@@ -18,7 +18,7 @@ interface ResizeMessage {
     height: number;
 }
 
-const iframeId = "homerepair-portal-iframe";
+const iframeId = "doorstep-portal-iframe";
 
 class HomeRepair {
     open() {
@@ -59,7 +59,7 @@ class HomeRepair {
         }
 
         const iframe = document.createElement("iframe");
-        iframe.id = "homerepair-portal-iframe";
+        iframe.id = "doorstep-portal-iframe";
         iframe.src = origin + "/?clientId=" + encodeURIComponent(clientId!);
         iframe.style.border = "0";
         iframe.style.width = "100vw";
@@ -74,14 +74,6 @@ class HomeRepair {
 
         iframe.setAttribute("title", "Customer Portal");
         container.appendChild(iframe);
-
-        // //Let the iframe request height changes via postMessage.
-        // window.addEventListener("message", function (event: MessageEvent) {
-        //     if (event.origin !== origin) return;
-        //     if (isResizeMessage(event.data)) {
-        //         iframe.style.height = event.data.height + "px";
-        //     }
-        // });
 
         window.addEventListener("message", (event: MessageEvent) => {
             if (event.origin !== origin) return;

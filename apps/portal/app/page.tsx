@@ -47,12 +47,13 @@ export default async function PortalPage({
     }
 
     return (
-        <PortalClient
-            clientId={clientId}
-            config={{
+        <PortalBase
+            brandSettings={{
                 company_name: company.name,
                 ...(company.brand_setting ?? DEFAULT_COMPANY_BRANDING),
             }}
-        />
+        >
+            <PortalClient clientId={clientId} />
+        </PortalBase>
     );
 }
