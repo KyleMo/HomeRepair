@@ -22,7 +22,7 @@
 }
 
 .muteText {
-    color: #989898;
+    color: var(--ds-color-text-muted);
 }
 
 .grid {
@@ -31,7 +31,7 @@
     padding: 2px 4px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--hr-space-3);
+    gap: var(--ds-space-3);
     overflow: auto;
     height: 100%;
 }
@@ -44,13 +44,13 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: var(--hr-space-2);
-    padding: var(--hr-space-4);
+    gap: var(--ds-space-2);
+    padding: var(--ds-space-4);
     min-height: 128px;
     text-align: left;
-    background: var(--hr-color-bg);
-    border: 1px solid var(--hr-color-border);
-    border-radius: var(--hr-radius-md);
+    background: var(--ds-color-surface);
+    border: 1px solid var(--ds-color-border);
+    border-radius: var(--ds-radius-md);
     cursor: pointer;
     transition:
         border-color 0.15s ease,
@@ -59,13 +59,13 @@
 }
 
 .card:hover {
-    border-color: var(--hr-color-brand);
+    border-color: var(--ds-color-primary);
 }
 
 .card:focus-visible {
     outline: none;
-    border-color: var(--hr-color-brand);
-    box-shadow: 0 0 0 3px rgba(18, 102, 74, 0.15);
+    border-color: var(--ds-color-primary);
+    box-shadow: 0 0 0 3px var(--ds-color-focus-ring);
 }
 
 .card:active {
@@ -73,19 +73,19 @@
 }
 
 .card[aria-pressed="true"] {
-    border-color: var(--hr-color-brand);
-    background: var(--hr-color-brand-subtle, rgba(18, 102, 74, 0.06));
+    border-color: var(--ds-color-primary);
+    background: var(--ds-color-selected-fill);
     box-shadow:
-        0 0 0 1px var(--hr-color-brand),
-        0 6px 16px rgba(18, 102, 74, 0.1);
+        0 0 0 1px var(--ds-color-primary),
+        0 6px 16px var(--ds-color-focus-ring);
 }
 
 .card[aria-pressed="true"] .label {
-    color: var(--hr-color-brand-strong);
+    color: var(--ds-color-selected-text);
 }
 
 .iconWrap {
-    color: var(--hr-color-brand-strong);
+    color: var(--ds-color-primary-strong);
 }
 
 .icon {
@@ -97,7 +97,7 @@
 .label {
     font-size: 0.8rem;
     font-weight: 600;
-    color: var(--hr-color-fg);
+    color: var(--ds-color-text);
     line-height: 1.2;
 }
 
@@ -123,8 +123,8 @@
     list-style: none;
     margin: 4px 0 0;
     padding: 0.25rem;
-    background: white;
-    border: 1px solid var(--hr-color-border);
+    background: var(--ds-color-surface);
+    border: 1px solid var(--ds-color-border);
     border-radius: 12px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
     max-height: 260px;
@@ -139,7 +139,7 @@
 }
 
 .suggestionItem:hover {
-    background: var(--hr-color-brand-subtle, rgba(18, 102, 74, 0.06));
+    background: var(--ds-color-primary-subtle);
 }
 
 .brandList {
@@ -153,7 +153,7 @@
     padding: 0.75rem 0.5rem;
     font-weight: 600;
     font-size: 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.074);
+    border-bottom: 1px solid var(--ds-color-border);
     cursor: pointer;
     transition:
         background 0.15s ease,
@@ -162,12 +162,12 @@
 }
 
 .listItem:hover {
-    background: var(--hr-color-brand-subtle, rgba(18, 102, 74, 0.06));
+    background: var(--ds-color-primary-subtle);
 }
 
 .listItem.selected {
-    color: var(--hr-color-brand-strong);
-    background: var(--hr-color-brand-subtle, rgba(18, 102, 74, 0.06));
+    color: var(--ds-color-selected-text);
+    background: var(--ds-color-selected-fill);
 }
 
 .snapModelBoxInstruction {
@@ -176,7 +176,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: #dddddd;
+    background-color: var(--ds-color-track);
     border-radius: 1rem;
     padding: 1rem;
     height: 50%;

@@ -13,8 +13,8 @@
     width: 100%;
     border-radius: 10px;
     height: 50px;
-    background-color: #0f6e56;
-    color: white;
+    background-color: var(--ds-color-primary);
+    color: var(--ds-color-button-text);
     font-size: 1.25rem;
     border: none;
     cursor: pointer;
@@ -22,12 +22,12 @@
 }
 
 .footerContinue:hover:not(:disabled) {
-    background-color: #0c5844;
+    background-color: var(--ds-color-primary-strong);
 }
 
 .footerContinue:disabled {
-    background-color: #a3c4ba;
-    color: #f0f0f0;
+    background-color: var(--ds-color-primary-disabled);
+    color: var(--ds-color-button-text);
     cursor: not-allowed;
 }
 
@@ -36,14 +36,14 @@
     border-radius: 10px;
     height: 50px;
     background-color: transparent;
-    color: #0f6e56;
+    color: var(--ds-color-primary);
     font-size: 1.25rem;
-    border: 1px solid #0f6e56;
+    border: 1px solid var(--ds-color-primary);
 }
 
 .footerSkip:disabled {
-    color: #a3c4ba;
-    border-color: #a3c4ba;
+    color: var(--ds-color-primary-disabled);
+    border-color: var(--ds-color-primary-disabled);
     cursor: not-allowed;
 }
 

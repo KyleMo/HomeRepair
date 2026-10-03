@@ -9,7 +9,7 @@
 }
 
 .title {
-    margin: 0 0 var(--hr-space-2);
+    margin: 0 0 var(--ds-space-2);
     font-size: 1.75rem;
     font-weight: 600;
 }
