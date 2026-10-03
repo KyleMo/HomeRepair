@@ -178,11 +178,19 @@ async function seedDev() {
     });
 
     // --- Brand settings (one per company) ---
-    // Culver City keeps the palette defaults; only the logo is set, which is
-    // the common case and exercises the schema defaults.
+    // Culver City gets a warm orange palette, so each seeded portal is
+    // distinguishable from the default green at a glance.
     await prisma.companyBrandSetting.create({
         data: {
             company_id: culver.id,
+            primary_color: "#C2410C",
+            secondary_color: "#FFEDD5",
+            selected_fill: "#FFEDD5",
+            selected_text: "#7C2D12",
+            body_text: "#1C1917",
+            button_text: "#FFFFFF",
+            page_background: "#FAF7F5",
+            corner_radius: 16,
             logo_url: "https://placehold.co/160x48/0F6E56/FFFFFF?text=Culver",
         },
     });

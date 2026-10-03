@@ -67,3 +67,11 @@ export const normalizeHex = (input: string): string | null => {
 
     return /^[0-9a-fA-F]{6}$/.test(raw) ? `#${raw}`.toUpperCase() : null;
 };
+
+/**
+ * Validate hex colour. Takes anything — a DB value, a missing field — and
+ * returns the canonical `#RRGGBB`, or null if it isn't a hex colour, leaving
+ * the caller to pick a fallback.
+ */
+export const validateHexColor = (value: unknown): string | null =>
+    typeof value === "string" ? normalizeHex(value) : null;
