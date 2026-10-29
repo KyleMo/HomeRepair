@@ -1,5 +1,7 @@
 .footer {
     width: 100%;
+    /* Fixed chrome — the step body shrinks and scrolls instead. */
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     align-items: center;

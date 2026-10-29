@@ -3,7 +3,7 @@ import { Result } from "./Result";
 import BrandSelection from "@/components/steps/BrandSelection";
 import ApplianceSelection from "@/components/steps/ApplianceSelection";
 import DateSelect from "@/components/steps/DateSelect";
-import IssueSelection from "@/components/steps/IssueSelection";
+import IssueSelection from "@/components/steps/SymptomSelection";
 import Confirm from "@/components/steps/Success";
 import SnapModelTag from "@/components/steps/SnapModelTag";
 import { ComponentType, SVGProps } from "react";
@@ -20,11 +20,12 @@ import {
     WineCoolerIcon,
 } from "@/components/icons";
 import ConfirmBooking from "@/components/steps/ConfirmBooking";
-import type { AttemptStepEvent } from "./Session";
+import { ApplianceTypeId, CompanyServiceId } from "./Settings";
+import { IsoString } from "@homerepair/utility/types";
 
 export type StepId = string;
 // UUID
-export type IssueId = string;
+export type SymptomId = string;
 export type BrandId = string;
 
 export const FIRST_FORM_STEP_ID: StepId = "hr_appliance";
@@ -66,7 +67,7 @@ const perRepairSteps: FormStep[] = [
             if (!repair.brandId) {
                 return {
                     success: false,
-                    error: `Please assigning a brand to the ${repair.label.toLocaleLowerCase()}`,
+                    error: `Please assigning a brand to the ${repair.name.toLocaleLowerCase()}`,
                 };
             }
             return { success: true, value: "ok" };
@@ -237,16 +238,16 @@ export const buildStepScreens = (state: FormState): Screen[] => {
 };
 
 export type FormAction =
+    | { type: "set_error"; error?: string }
     | { type: "set_session_id"; sessionId: string }
+    | { type: "set_availability"; availability: AvailabilityResult | null }
     | { type: "set_customer_detail"; customerDetail: CustomerDetail }
     | { type: "set_phone"; phone: string }
     | { type: "set_progress"; progress: number }
     | { type: "set_repairs"; repairs: Repair[] }
     | { type: "update_repair"; repair: Repair }
     | { type: "add_repair"; repair: Repair }
-    | { type: "update_repair"; repair: Repair }
     | { type: "remove_repair"; id: string }
-    | { type: "toggle_repair"; repair: Repair }
     | { type: "next_step" }
     | { type: "back_step" };
 
@@ -280,9 +281,11 @@ export const defaultCustomerDetail: CustomerDetail = {
 
 export type Repair = {
     id: string;
-    label: string;
+    companyServiceId: CompanyServiceId;
+    applianceTypeId: ApplianceTypeId;
+    name: string;
     brandId?: BrandId;
-    issues: IssueId[];
+    symptoms: SymptomId[];
 };
 
 export type Model = {
@@ -295,11 +298,22 @@ export type StepCursor = {
     repairId?: string;
 };
 
+// Mirrors the POST /api/company/[companyId]/availability response.
+export type AvailabilityResult = {
+    date: IsoString;
+    /** IANA zone the start times should be displayed in. */
+    timezone: string;
+    durationMinutes: number;
+    startTimes: IsoString[];
+};
+
 export type FormState = {
     customerDetail: CustomerDetail;
     cursor: StepCursor;
     repairs: Repair[];
     progress: number;
+    error?: string;
+    availability: AvailabilityResult | null;
     // if we have already seen a screen and its filter out state is true we still want to keep the screen
     seenScreen: { [key: StepId]: boolean };
 };
@@ -318,26 +332,3 @@ export type FormStep = {
     nextButtonText?: string;
     skipButtonText?: string;
 };
-
-type Appliance = {
-    id: string;
-    label: string;
-    Icon: ComponentType<SVGProps<SVGSVGElement>>;
-};
-
-export const APPLIANCES: Appliance[] = [
-    { id: "refrigerator", label: "Refrigerator", Icon: RefrigeratorIcon },
-    { id: "washer", label: "Washer", Icon: WasherIcon },
-    { id: "dryer", label: "Dryer", Icon: DryerIcon },
-    { id: "dishwasher", label: "Dishwasher", Icon: DishwasherIcon },
-    { id: "range", label: "Range / stove", Icon: RangeIcon },
-    { id: "oven", label: "Oven", Icon: OvenIcon },
-    { id: "microwave", label: "Microwave", Icon: MicrowaveIcon },
-    { id: "ice-maker", label: "Ice maker", Icon: IceMakerIcon },
-    {
-        id: "garbage-disposal",
-        label: "Garbage disposal",
-        Icon: GarbageDisposalIcon,
-    },
-    { id: "wine-cooler", label: "Wine cooler", Icon: WineCoolerIcon },
-];

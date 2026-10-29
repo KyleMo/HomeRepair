@@ -1,9 +1,7 @@
 import { useFormContext } from "@/context/hooks";
 import TextInput from "../generic/TextInput";
-import { RefrigeratorIcon } from "../icons";
 import StepTemplate from "./StepTemplate";
 import styles from "./steps.module.css";
-import { APPLIANCES } from "@/models/Form";
 
 const SnapModelTag = () => {
     const { form, dispatch } = useFormContext();
@@ -12,10 +10,6 @@ const SnapModelTag = () => {
     if (!repair) {
         return <div>Please go back and select an item to repair</div>;
     }
-
-    const Icon =
-        APPLIANCES.find((app) => app.id === repair.id)?.Icon ??
-        RefrigeratorIcon;
 
     return (
         <StepTemplate
@@ -27,7 +21,7 @@ const SnapModelTag = () => {
                 style={{ justifyContent: "center", width: "100%" }}
             >
                 <div className={styles.snapModelBoxInstruction}>
-                    <Icon className={styles.snapModelIcon} />
+                    {/* <Icon className={styles.snapModelIcon} /> */}
                     <p>
                         The tag is inside the fridge, on the side wall near the
                         crisper drawers.

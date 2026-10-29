@@ -25,6 +25,7 @@ const FormContextProvider = ({ children }: { children: ReactNode }) => {
     const { getSession, init, touch } = usePortalSession();
     const [form, rawDispatch] = useReducer(formReducer, {
         cursor: { stepId: FIRST_FORM_STEP_ID },
+        availability: null,
         progress: 0,
         repairs: [],
         customerDetail: defaultCustomerDetail,

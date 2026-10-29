@@ -12,11 +12,14 @@ type PillProps = HTMLAttributes<HTMLSpanElement> & {
     onRemove?: MouseEventHandler<HTMLButtonElement>;
     /** Accessible label for the remove button. Defaults to "Remove". */
     removeLabel?: string;
+    /** When defined, the pill acts as a toggle button in this pressed state. */
+    selected?: boolean;
 };
 
 const Pill = ({
     onRemove,
     removeLabel = "Remove",
+    selected,
     className,
     children,
     ...props
@@ -26,7 +29,14 @@ const Pill = ({
         .join(" ");
 
     return (
-        <span className={classes} {...props}>
+        <span
+            className={classes}
+            {...(selected !== undefined && {
+                role: "button",
+                "aria-pressed": selected,
+            })}
+            {...props}
+        >
             <span className={styles.label}>{children}</span>
             {onRemove && (
                 <button

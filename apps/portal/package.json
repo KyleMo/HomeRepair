@@ -4,6 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev --port 3001",
+        "dev:debug": "next dev --port 3001 --inspect",
         "build": "next build",
         "build:loader": "esbuild loader/loader.ts --bundle --minify --format=iife --target=es2017 --outfile=public/loader.js",
         "start": "next start --port 3001",
@@ -15,7 +16,8 @@
         "@homerepair/utility": "workspace:*",
         "next": "^15.3.0",
         "react": "^19.1.0",
-        "react-dom": "^19.1.0"
+        "react-dom": "^19.1.0",
+        "zod": "^4.5.4"
     },
     "devDependencies": {
         "@types/google.maps": "^3.65.3",

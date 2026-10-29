@@ -483,28 +483,25 @@ async function seedDev() {
         data: {
             company_id: culver.id,
             appliance_type_id: refrigerator.id,
-            job_duration_minutes: 60,
         },
     });
     const svcOvenRange = await prisma.companyService.create({
         data: {
             company_id: culver.id,
             appliance_type_id: ovenRange.id,
-            job_duration_minutes: 90,
         },
     });
     const svcDishwasher = await prisma.companyService.create({
         data: {
             company_id: culver.id,
             appliance_type_id: dishwasher.id,
-            job_duration_minutes: 45,
         },
     });
     await prisma.companyService.create({
         data: {
             company_id: culver.id,
             appliance_type_id: washer.id,
-            job_duration_minutes: 60,
+
             enabled: false, // currently not taking washer jobs
         },
     });
@@ -512,7 +509,6 @@ async function seedDev() {
         data: {
             company_id: culver.id,
             appliance_type_id: wineCooler.id,
-            job_duration_minutes: 75,
         },
     });
     // Santa Monica offers one service so it isn't empty.
@@ -520,7 +516,6 @@ async function seedDev() {
         data: {
             company_id: santaMonica.id,
             appliance_type_id: refrigerator.id,
-            job_duration_minutes: 55,
         },
     });
 
@@ -705,70 +700,126 @@ async function seedDev() {
     // console's "today" and date-grouped views always have something to render
     // no matter how long ago the database was last reset.
 
+    // Each booking is a visit; its repairs (one per appliance) carry the
+    // service, brand and symptoms. Repair durations sum to the booking's span.
+
     // Yesterday, finished.
-    const bookingCompleted = await prisma.companyBooking.create({
+    await prisma.companyBooking.create({
         data: {
             company_id: culver.id,
             customer_id: dana.id,
-            company_service_id: svcDishwasher.id,
-            appliance_brand_id: bosch.id,
             status: BookingStatus.Completed,
             start_time: pacific(-1, "08:36"),
             end_time: pacific(-1, "10:05"),
             completed_at: pacific(-1, "09:35"),
             booked_timezone: BOOKED_TZ,
             ...danaHome,
+            repairs: {
+                create: [
+                    {
+                        company_service_id: svcDishwasher.id,
+                        appliance_brand_id: bosch.id,
+                        duration_minutes: 89,
+                        symptoms: {
+                            create: [{ symptom_id: dishwasherNotDraining.id }],
+                        },
+                    },
+                ],
+            },
         },
     });
 
     // Today, mid-job.
-    const bookingInProgress = await prisma.companyBooking.create({
+    await prisma.companyBooking.create({
         data: {
             company_id: culver.id,
             customer_id: priya.id,
-            company_service_id: svcRefrigerator.id,
-            appliance_brand_id: samsung.id,
             status: BookingStatus.InProgress,
             start_time: pacific(0, "11:00"),
             end_time: pacific(0, "13:00"),
             booked_timezone: BOOKED_TZ,
             ...priyaHome,
+            repairs: {
+                create: [
+                    {
+                        company_service_id: svcRefrigerator.id,
+                        appliance_brand_id: samsung.id,
+                        duration_minutes: 120,
+                        // A repair can carry more than one symptom.
+                        symptoms: {
+                            create: [
+                                { symptom_id: fridgeIceMaker.id },
+                                { symptom_id: samsungIceFrost.id },
+                            ],
+                        },
+                    },
+                ],
+            },
         },
     });
 
     // Today, still ahead — no brand, the case a skipped brand step produces.
-    const bookingScheduled = await prisma.companyBooking.create({
+    await prisma.companyBooking.create({
         data: {
             company_id: culver.id,
             customer_id: owen.id,
-            company_service_id: svcOvenRange.id,
             status: BookingStatus.Scheduled,
             start_time: pacific(0, "13:43"),
             end_time: pacific(0, "15:29"),
             booked_timezone: BOOKED_TZ,
             ...owenUnitB,
+            repairs: {
+                create: [
+                    {
+                        company_service_id: svcOvenRange.id,
+                        duration_minutes: 106,
+                        symptoms: {
+                            create: [{ symptom_id: ovenNotHeating.id }],
+                        },
+                    },
+                ],
+            },
         },
     });
 
-    // Tomorrow, and a cancellation, so every status appears at least once.
-    const bookingTomorrow = await prisma.companyBooking.create({
+    // Tomorrow — a two-appliance visit, the multi-repair case.
+    await prisma.companyBooking.create({
         data: {
             company_id: culver.id,
             customer_id: dana.id,
-            company_service_id: svcRefrigerator.id,
-            appliance_brand_id: whirlpool.id,
             status: BookingStatus.Scheduled,
             start_time: pacific(1, "09:00"),
             end_time: pacific(1, "11:00"),
             booked_timezone: BOOKED_TZ,
             ...danaHome,
+            repairs: {
+                create: [
+                    {
+                        company_service_id: svcRefrigerator.id,
+                        appliance_brand_id: whirlpool.id,
+                        duration_minutes: 75,
+                        symptoms: {
+                            create: [{ symptom_id: fridgeNotCooling.id }],
+                        },
+                    },
+                    {
+                        company_service_id: svcDishwasher.id,
+                        appliance_brand_id: whirlpool.id,
+                        duration_minutes: 45,
+                        symptoms: {
+                            create: [{ symptom_id: dishwasherNotDraining.id }],
+                        },
+                    },
+                ],
+            },
         },
     });
+
+    // And a cancellation, so every status appears at least once.
     await prisma.companyBooking.create({
         data: {
             company_id: culver.id,
             customer_id: priya.id,
-            company_service_id: svcDishwasher.id,
             status: BookingStatus.Cancelled,
             start_time: pacific(1, "14:00"),
             end_time: pacific(1, "16:00"),
@@ -777,52 +828,40 @@ async function seedDev() {
             cancelled_at: pacific(-1, "17:20"),
             booked_timezone: BOOKED_TZ,
             ...priyaHome,
+            repairs: {
+                create: [
+                    {
+                        company_service_id: svcDishwasher.id,
+                        duration_minutes: 120,
+                    },
+                ],
+            },
         },
     });
 
     // Santa Monica gets one so the company filter has data on both sides.
-    const bookingSantaMonica = await prisma.companyBooking.create({
+    await prisma.companyBooking.create({
         data: {
             company_id: santaMonica.id,
             customer_id: marguerite.id,
-            company_service_id: svcSantaMonicaFridge.id,
-            appliance_brand_id: lg.id,
             status: "Scheduled",
             start_time: pacific(0, "15:00"),
             end_time: pacific(0, "18:00"), // 3 hr windows at this company
             booked_timezone: BOOKED_TZ,
             ...margueriteHome,
+            repairs: {
+                create: [
+                    {
+                        company_service_id: svcSantaMonicaFridge.id,
+                        appliance_brand_id: lg.id,
+                        duration_minutes: 180,
+                        symptoms: {
+                            create: [{ symptom_id: fridgeLeaking.id }],
+                        },
+                    },
+                ],
+            },
         },
-    });
-
-    // --- Booking symptoms (a booking can carry more than one) ---
-    await prisma.bookingSymptom.createMany({
-        data: [
-            {
-                company_booking_id: bookingCompleted.id,
-                symptom_id: dishwasherNotDraining.id,
-            },
-            {
-                company_booking_id: bookingInProgress.id,
-                symptom_id: fridgeIceMaker.id,
-            },
-            {
-                company_booking_id: bookingInProgress.id,
-                symptom_id: samsungIceFrost.id,
-            },
-            {
-                company_booking_id: bookingScheduled.id,
-                symptom_id: ovenNotHeating.id,
-            },
-            {
-                company_booking_id: bookingTomorrow.id,
-                symptom_id: fridgeNotCooling.id,
-            },
-            {
-                company_booking_id: bookingSantaMonica.id,
-                symptom_id: fridgeLeaking.id,
-            },
-        ],
     });
 
     // --- Summary ---
@@ -841,7 +880,8 @@ async function seedDev() {
         customers,
         customerAddresses,
         bookings,
-        bookingSymptoms,
+        bookingRepairs,
+        repairSymptoms,
     ] = await Promise.all([
         prisma.organization.count(),
         prisma.company.count(),
@@ -857,7 +897,8 @@ async function seedDev() {
         prisma.customer.count(),
         prisma.customerAddress.count(),
         prisma.companyBooking.count(),
-        prisma.bookingSymptom.count(),
+        prisma.bookingRepair.count(),
+        prisma.repairSymptom.count(),
     ]);
     console.log("Seed complete:", {
         orgs,
@@ -874,7 +915,8 @@ async function seedDev() {
         customers,
         customerAddresses,
         bookings,
-        bookingSymptoms,
+        bookingRepairs,
+        repairSymptoms,
     });
 }
 

@@ -1,6 +1,8 @@
 .header {
     background: var(--ds-color-surface);
     height: 55px;
+    /* Fixed chrome — the step body shrinks and scrolls instead. */
+    flex-shrink: 0;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     display: flex;

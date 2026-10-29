@@ -1,44 +1,61 @@
 "use client";
 import { useState } from "react";
 import styles from "./steps.module.css";
-import { useFormContext } from "../../context/hooks";
+import { useClient, useFormContext } from "../../context/hooks";
 import StepTemplate from "./StepTemplate";
-import { APPLIANCES } from "@/models/Form";
 
 const ApplianceSelection = () => {
+    const { services } = useClient();
     const { form, dispatch } = useFormContext();
     const [showMore, setShowMore] = useState<boolean>(false);
 
-    const filteredAppliance = showMore ? APPLIANCES : APPLIANCES.slice(0, 6);
     return (
         <StepTemplate
             title="What needs repair?"
             subtitle="Tap the appliance(s) giving you trouble."
         >
             <ul className={styles.grid}>
-                {filteredAppliance.map(({ id, label, Icon }) => {
-                    const active = form.repairs.some((r) => r.id === id);
-                    return (
-                        <li key={id}>
-                            <button
-                                type="button"
-                                className={styles.card}
-                                aria-pressed={active}
-                                onClick={() =>
-                                    dispatch({
-                                        type: "toggle_repair",
-                                        repair: { id, label, issues: [] },
-                                    })
-                                }
-                            >
-                                <span className={styles.iconWrap}>
-                                    <Icon className={styles.icon} />
-                                </span>
-                                <span className={styles.label}>{label}</span>
-                            </button>
-                        </li>
-                    );
-                })}
+                {services.map(
+                    ({
+                        id: companyServiceId,
+                        appliance_type: { id: applianceTypeId, name },
+                    }) => {
+                        const existing = form.repairs.find(
+                            (r) => r.companyServiceId === companyServiceId,
+                        );
+                        return (
+                            <li key={companyServiceId}>
+                                <button
+                                    type="button"
+                                    className={styles.card}
+                                    aria-pressed={!!existing}
+                                    onClick={() =>
+                                        existing
+                                            ? dispatch({
+                                                  type: "remove_repair",
+                                                  id: existing.id,
+                                              })
+                                            : dispatch({
+                                                  type: "add_repair",
+                                                  repair: {
+                                                      id: crypto.randomUUID(),
+                                                      companyServiceId,
+                                                      applianceTypeId,
+                                                      name,
+                                                      symptoms: [],
+                                                  },
+                                              })
+                                    }
+                                >
+                                    <span className={styles.iconWrap}>
+                                        {/* <Icon className={styles.icon} /> */}
+                                    </span>
+                                    <span className={styles.label}>{name}</span>
+                                </button>
+                            </li>
+                        );
+                    },
+                )}
             </ul>
             <div
                 onClick={() => setShowMore((prev) => !prev)}

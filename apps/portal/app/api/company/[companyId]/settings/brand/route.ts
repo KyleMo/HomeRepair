@@ -1,4 +1,4 @@
-import { PortalBrandConfig } from "@/models/BrandSettings";
+import { PortalBrandConfig } from "@/models/Settings";
 import { prisma } from "@homerepair/data";
 import { DEFAULT_COMPANY_BRANDING } from "@homerepair/data/types";
 import { NextRequest, NextResponse } from "next/server";

@@ -46,7 +46,7 @@ const BrandSelection = () => {
 
     return (
         <StepTemplate
-            title={`What's the brand of your ${repair.label.toLocaleLowerCase()}?`}
+            title={`What's the brand of your ${repair.name.toLocaleLowerCase()}?`}
         >
             <TextInput
                 value={search ?? ""}

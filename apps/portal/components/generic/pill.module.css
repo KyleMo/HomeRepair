@@ -53,6 +53,13 @@
     border-color: var(--ds-color-primary);
 }
 
+.pill[aria-pressed="true"] {
+    background: var(--ds-color-selected-fill);
+    color: var(--ds-color-selected-text);
+    border-color: var(--ds-color-primary);
+    box-shadow: 0 0 0 1px var(--ds-color-primary);
+}
+
 /* Dismiss button */
 .remove {
     display: grid;

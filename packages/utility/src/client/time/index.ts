@@ -1,5 +1,13 @@
 import { Dayjs } from "dayjs";
 import dayjs from "../dayjs";
+import type {
+    Company,
+    CompanyBooking,
+    CompanyBookingSetting,
+    DayOfWeekSetting,
+    Weekday,
+} from "@homerepair/data";
+import { IsoString, JobWindow } from "../../types";
 
 type Greeting = "Good Morning" | "Good Afternoon" | "Good Evening";
 
@@ -13,10 +21,12 @@ export const greetingByTimeOfDay = (): Greeting => {
 
 export type DayOfWeek = {
     index: number;
-    label: string;
+    label: Weekday;
     labelShort: string;
 };
 
+// Ordered so each entry's position matches its index (dayjs().day()).
+// Labels are checked against the Weekday enum via the DayOfWeek type.
 export const daysOfWeek: DayOfWeek[] = [
     { index: 0, label: "Sunday", labelShort: "Sun" },
     { index: 1, label: "Monday", labelShort: "Mon" },
@@ -26,6 +36,18 @@ export const daysOfWeek: DayOfWeek[] = [
     { index: 5, label: "Friday", labelShort: "Fri" },
     { index: 6, label: "Saturday", labelShort: "Sat" },
 ];
+
+export const getDayOfWeekByWeekday = (dow: Weekday): DayOfWeek => {
+    const day = daysOfWeek.find((d) => d.label === dow);
+    if (!day) throw new Error(`Invalid day of week ${dow}`);
+    return day;
+};
+
+export const getDayOfWeekByInt = (dow: number): DayOfWeek => {
+    const day = daysOfWeek[dow];
+    if (!day) throw new Error(`Invalid day of week ${dow}`);
+    return day;
+};
 
 /**
  * "2026-08-11" -> "Tue Aug 11".
@@ -162,4 +184,147 @@ export const groupBookingsByDate = <T extends { start_time: Date | string }>(
     return [...byDate]
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([date, dayBookings]) => ({ date, bookings: dayBookings }));
+};
+
+// Only the fields availability reads, so callers can pass a narrow `select`.
+type AvailabilityBooking = Pick<CompanyBooking, "start_time" | "end_time">;
+type AvailabilityDaySetting = Pick<
+    DayOfWeekSetting,
+    "week_day" | "is_open" | "open_at" | "close_at"
+>;
+
+const toJobWindows = (bookings: AvailabilityBooking[]): JobWindow[] => {
+    return bookings.map((b) => ({
+        start: b.start_time.toISOString(),
+        end: b.end_time.toISOString(),
+    }));
+};
+
+const buildOpenWindows = ({
+    from,
+    to,
+    jobWindows,
+    maxAllowedJobsPerWindow,
+}: {
+    from: Dayjs; // company open, already .tz()'d
+    to: Dayjs; // company close
+    jobWindows: JobWindow[];
+    maxAllowedJobsPerWindow: number;
+}): { start: Dayjs; end: Dayjs }[] => {
+    const events = jobWindows
+        .flatMap((jw) => [
+            { at: dayjs(jw.start).valueOf(), delta: 1 },
+            { at: dayjs(jw.end).valueOf(), delta: -1 },
+        ])
+        // sort so ends are first in the array
+        .sort((a, b) => a.at - b.at || a.delta - b.delta);
+
+    const windows: { start: number; end: number }[] = [];
+
+    let load = 0;
+    let openSince: number | null = -Infinity;
+
+    for (const { at, delta } of events) {
+        const wasOpen = load < maxAllowedJobsPerWindow;
+        load += delta;
+        const isOpen = load < maxAllowedJobsPerWindow;
+
+        // Since we were previously open and we are now not open, we know that we have found the end of a window
+        if (wasOpen && !isOpen) {
+            windows.push({ start: openSince!, end: at });
+            openSince = null;
+        } else if (!wasOpen && isOpen) {
+            openSince = at;
+        }
+        // else move on to the next event
+    }
+    if (openSince !== null) windows.push({ start: openSince, end: Infinity });
+
+    const fromMs = from.valueOf();
+    const toMs = to.valueOf();
+    return (
+        windows
+            .map((w) => ({
+                start: Math.max(w.start, fromMs),
+                end: Math.min(w.end, toMs),
+            }))
+            // remove empty windows from above min/max
+            .filter((w) => w.start < w.end)
+            // add() off `from` keeps its timezone, unlike dayjs(ms)
+            .map((w) => ({
+                start: from.add(w.start - fromMs, "millisecond"),
+                end: from.add(w.end - fromMs, "millisecond"),
+            }))
+    );
+};
+
+type OpenTimeWindow = {
+    start: IsoString;
+    end: IsoString;
+};
+
+type AvailabilityResult = {
+    date: IsoString;
+    openTimeWindows: OpenTimeWindow[];
+};
+
+export const buildAvailabilityForDay = (
+    /**Earliest bookable instant: now for today, company-local midnight for a future day*/
+    start: Dayjs,
+    company: Pick<Company, "timezone">,
+    maxAllowedJobsPerWindow: number,
+    daysOfWeekSettings: AvailabilityDaySetting[],
+    // Excludes cancelled bookings
+    bookings: AvailabilityBooking[],
+): AvailabilityResult => {
+    // This doesn't actually change the time, it just assigns a timezone
+    const localStart = start.tz(company.timezone);
+    // company open hours are from/to
+    const dayOfWeek = daysOfWeekSettings.find(
+        (dow) => dow.week_day === getDayOfWeekByInt(localStart.day()).label,
+    );
+
+    // Assume closed
+    if (!dayOfWeek || !dayOfWeek.is_open)
+        return {
+            date: localStart.startOf("day").toISOString(),
+            openTimeWindows: [],
+        };
+
+    // Plain "YYYY-MM-DD HH:mm" string, read as company clock time (not converted)
+    const localOpenAt = dayjs.tz(
+        `${localStart.format("YYYY-MM-DD")} ${dayOfWeek.open_at}`,
+        company.timezone,
+    );
+    const localCloseAt = dayjs.tz(
+        `${localStart.format("YYYY-MM-DD")} ${dayOfWeek.close_at}`,
+        company.timezone,
+    );
+
+    const ceilingLocal = ceilToQuarterHour(localStart);
+    const openWindows = buildOpenWindows({
+        from: ceilingLocal > localOpenAt ? ceilingLocal : localOpenAt,
+        to: localCloseAt,
+        jobWindows: toJobWindows(bookings),
+        maxAllowedJobsPerWindow,
+    });
+
+    return {
+        date: localStart.startOf("day").toISOString(),
+        openTimeWindows: openWindows.map((ow) => {
+            return {
+                start: ow.start.toISOString(),
+                end: ow.end.toISOString(),
+            };
+        }),
+    };
+};
+
+// 1:05 -> 1:15, 1:15 -> 1:15, 1:15:30 -> 1:30
+export const ceilToQuarterHour = (time: Dayjs): Dayjs => {
+    const floored = time
+        .minute(time.minute() - (time.minute() % 15))
+        .second(0)
+        .millisecond(0);
+    return floored.isBefore(time) ? floored.add(15, "minute") : floored;
 };

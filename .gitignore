@@ -2,6 +2,7 @@ node_modules/
 .next/
 .turbo/
 .env
+# .env.local, .env.development.local, etc. — in any package
+.env*.local
 *.log
 .DS_Store
-apps/portal/.env.local

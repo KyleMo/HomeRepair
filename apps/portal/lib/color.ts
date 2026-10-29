@@ -1,4 +1,4 @@
-import { ColorField, PortalBrandConfig } from "@/models/BrandSettings";
+import { ColorField, PortalBrandConfig } from "@/models/Settings";
 import { DEFAULT_COMPANY_BRANDING } from "@homerepair/data";
 import { validateHexColor } from "@homerepair/utility";
 import { CSSProperties } from "react";

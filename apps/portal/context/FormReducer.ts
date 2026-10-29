@@ -37,6 +37,12 @@ const locateCursor = (
 
 export function formReducer(state: FormState, action: FormAction): FormState {
     switch (action.type) {
+        case "set_error": {
+            return {
+                ...state,
+                error: action.error,
+            };
+        }
         case "set_customer_detail": {
             return {
                 ...state,
@@ -45,20 +51,6 @@ export function formReducer(state: FormState, action: FormAction): FormState {
         }
         case "set_repairs":
             return { ...state, repairs: action.repairs };
-        case "toggle_repair": {
-            // Also adds steps into flow
-            const repairExists = state.repairs.some(
-                (r) => r.id === action.repair.id,
-            );
-            if (repairExists)
-                return {
-                    ...state,
-                    repairs: state.repairs.filter(
-                        (r) => r.id !== action.repair.id,
-                    ),
-                };
-            return { ...state, repairs: [...state.repairs, action.repair] };
-        }
         case "update_repair": {
             const repairs = [...state.repairs];
             const index = repairs.findIndex((r) => r.id === action.repair.id);
@@ -74,6 +66,19 @@ export function formReducer(state: FormState, action: FormAction): FormState {
             return {
                 ...state,
                 repairs,
+            };
+        }
+        case "add_repair":
+            return { ...state, repairs: [...state.repairs, action.repair] };
+        case "remove_repair":
+            return {
+                ...state,
+                repairs: state.repairs.filter((r) => r.id !== action.id),
+            };
+        case "set_availability": {
+            return {
+                ...state,
+                availability: action.availability,
             };
         }
         case "next_step": {

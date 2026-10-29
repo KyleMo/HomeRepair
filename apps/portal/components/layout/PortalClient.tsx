@@ -1,14 +1,17 @@
 "use client";
-import { PortalBrandConfig } from "@/models/BrandSettings";
+import { PortalService, PortalSymptom } from "@/models/Settings";
 import ClientProvider from "@/context/ClientProvider";
 import FormContextProvider from "@/context/FormContextProvider";
 import SessionProvider from "@/context/SessionProvider";
 import AttemptTracker from "./AttemptTracker";
 import PortalForm from "./PortalForm";
 
-export default function PortalHome({ clientId }: { clientId: string }) {
+export default function PortalHome(props: {
+    clientId: string;
+    services: PortalService[];
+}) {
     return (
-        <ClientProvider clientId={clientId}>
+        <ClientProvider {...props}>
             <SessionProvider>
                 <FormContextProvider>
                     {/* Renders nothing; watches the cursor and records it. */}

@@ -1,12 +1,14 @@
 import { PropsWithChildren } from "react";
 import styles from "./portalbase.module.css";
-import { PortalBrandConfig } from "@/models/BrandSettings";
+import { PortalBrandConfig, PortalSymptom } from "@/models/Settings";
 import { brandThemeVars } from "@/lib/color";
 
 const PortalBase = ({
     brandSettings,
     children,
-}: PropsWithChildren<{ brandSettings?: PortalBrandConfig }>) => {
+}: PropsWithChildren<{
+    brandSettings?: PortalBrandConfig;
+}>) => {
     return (
         <main
             // ds-theme redeclares the derived tokens against these overrides.

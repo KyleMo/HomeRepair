@@ -1,6 +1,7 @@
 import PortalBase from "@/components/layout/PortalBase";
 import PortalClient from "@/components/layout/PortalClient";
 import PortalUnavailable from "@/components/layout/PortalUnavailable";
+import { PortalService } from "@/models/Settings";
 import { DEFAULT_COMPANY_BRANDING, prisma } from "@homerepair/data";
 
 export default async function PortalPage({
@@ -35,6 +36,48 @@ export default async function PortalPage({
                     logo_url: true,
                 },
             },
+            company_services: {
+                select: {
+                    id: true,
+                    appliance_type: {
+                        select: {
+                            id: true,
+                            name: true,
+                            symptoms: {
+                                where: {
+                                    // defaults + this company's custom ones
+                                    OR: [
+                                        { company_id: null },
+                                        { company_id: clientId },
+                                    ],
+                                    // no rule means enabled, so only exclude an explicit Disabled
+                                    symptom_rules: {
+                                        none: {
+                                            company_id: clientId,
+                                            rule: "Disabled",
+                                        },
+                                    },
+                                },
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    description: true,
+                                    brand_id: true,
+                                    appliance_type_id: true,
+                                },
+                            },
+                        },
+                    },
+                    duration_overrides: {
+                        select: {
+                            duration_minutes: true,
+                            company_service_id: true,
+                            brand_id: true,
+                            symptom_id: true,
+                        },
+                    },
+                },
+            },
         },
     });
 
@@ -53,7 +96,10 @@ export default async function PortalPage({
                 ...(company.brand_setting ?? DEFAULT_COMPANY_BRANDING),
             }}
         >
-            <PortalClient clientId={clientId} />
+            <PortalClient
+                clientId={clientId}
+                services={company.company_services as PortalService[]}
+            />
         </PortalBase>
     );
 }

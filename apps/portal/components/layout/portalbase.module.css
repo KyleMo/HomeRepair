@@ -6,7 +6,9 @@
     width: 100%;
     height: fit-content;
     max-width: 460px;
-    max-height: fit-content;
+    /* Grow with content, but never past the viewport — long steps scroll
+       inside the body instead of pushing the modal off-screen. */
+    max-height: calc(100dvh - 32px);
     border-radius: 12px;
     box-shadow:
         0 10px 30px rgba(0, 0, 0, 0.15),
